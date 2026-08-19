@@ -20,9 +20,11 @@
         <template v-else>
             <f7-list strong inset dividers v-for="group in allRuleGroups" :key="group.id">
                 <f7-list-item :title="group.name" group-title>
-                    <div class="group-actions" slot="after">
-                        <f7-link icon-f7="plus_circle" @click="goToNewRuleInGroup(group.id)"></f7-link>
-                    </div>
+                    <template #after>
+                        <div class="group-actions">
+                            <f7-link icon-f7="plus_circle" @click="goToNewRuleInGroup(group.id)"></f7-link>
+                        </div>
+                    </template>
                 </f7-list-item>
                 <f7-list-item
                     v-for="rule in rulesByGroup[group.id]"
@@ -30,8 +32,10 @@
                     :title="rule.name"
                     :footer="ruleSummary(rule)"
                     @click="editRule(rule)">
-                    <f7-icon v-if="!rule.active" slot="media" f7="minus_circle" style="color: var(--f7-list-item-footer-text-color)"></f7-icon>
-                    <f7-icon v-else slot="media" f7="checkmark_seal_fill" style="color: var(--f7-color-green)"></f7-icon>
+                    <template #media>
+                        <f7-icon :f7="rule.active ? 'checkmark_seal_fill' : 'minus_circle'"
+                                 :style="rule.active ? 'color: var(--f7-color-green)' : 'color: var(--f7-list-item-footer-text-color)'"></f7-icon>
+                    </template>
                 </f7-list-item>
                 <f7-list-button v-if="!rulesByGroup[group.id] || rulesByGroup[group.id]!.length === 0" color="blue" @click="goToNewRuleInGroup(group.id)">
                     {{ tt('Add Rule') }}

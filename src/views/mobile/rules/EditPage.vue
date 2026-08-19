@@ -11,7 +11,9 @@
             </f7-list-input>
             <f7-list-item>
                 <span>{{ tt('Active') }}</span>
-                <f7-toggle slot="after" :checked="rule.active" @toggle:change="rule.active = $event"></f7-toggle>
+                <template #after>
+                    <f7-toggle :checked="rule.active" @toggle:change="rule.active = $event"></f7-toggle>
+                </template>
             </f7-list-item>
         </f7-list>
 
@@ -20,10 +22,12 @@
         <f7-list strong inset dividers v-if="!loading">
             <f7-list-item>
                 <span>{{ tt('Match') }}</span>
-                <f7-segmented slot="after">
-                    <f7-button :active="!rule.strict" small @click="rule.strict = false">{{ tt('Any') }}</f7-button>
-                    <f7-button :active="rule.strict" small @click="rule.strict = true">{{ tt('All') }}</f7-button>
-                </f7-segmented>
+                <template #after>
+                    <f7-segmented>
+                        <f7-button :active="!rule.strict" small @click="rule.strict = false">{{ tt('Any') }}</f7-button>
+                        <f7-button :active="rule.strict" small @click="rule.strict = true">{{ tt('All') }}</f7-button>
+                    </f7-segmented>
+                </template>
             </f7-list-item>
             <div v-for="(trigger, idx) in rule.triggers" :key="'t' + idx">
                 <f7-list-item>
@@ -33,7 +37,9 @@
                         </select>
                         <f7-input v-if="needsValue(trigger.triggerType)" type="text" :placeholder="tt('Value')" :value="trigger.triggerValue" @input="trigger.triggerValue = $event.target.value"></f7-input>
                     </div>
-                    <f7-link slot="after" icon-f7="minus_circle" color="red" v-if="rule.triggers.length > 1" @click="rule.triggers.splice(idx, 1)"></f7-link>
+                    <template #after>
+                        <f7-link icon-f7="minus_circle" color="red" v-if="rule.triggers.length > 1" @click="rule.triggers.splice(idx, 1)"></f7-link>
+                    </template>
                 </f7-list-item>
             </div>
             <f7-list-button color="blue" @click="rule.triggers.push(new RuleTrigger())">{{ tt('Add Trigger') }}</f7-list-button>
@@ -50,7 +56,9 @@
                         </select>
                         <f7-input v-if="needsActionValue(action.actionType)" type="text" :placeholder="tt('Value')" :value="action.actionValue" @input="action.actionValue = $event.target.value"></f7-input>
                     </div>
-                    <f7-link slot="after" icon-f7="minus_circle" color="red" v-if="rule.actions.length > 1" @click="rule.actions.splice(idx, 1)"></f7-link>
+                    <template #after>
+                        <f7-link icon-f7="minus_circle" color="red" v-if="rule.actions.length > 1" @click="rule.actions.splice(idx, 1)"></f7-link>
+                    </template>
                 </f7-list-item>
             </div>
             <f7-list-button color="blue" @click="rule.actions.push(new RuleAction())">{{ tt('Add Action') }}</f7-list-button>
