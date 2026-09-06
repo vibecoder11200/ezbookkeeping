@@ -86,7 +86,7 @@
             </v-col>
         </v-row>
     </v-card-text>
-    <v-card-text :class="{ 'readonly': loading }" v-if="currentExploration.chartType === TransactionExplorerChartType.Pie.value">
+    <v-card-text :class="{ 'readonly': loading }" v-if="currentExploration.chartType === TransactionExplorerChartType.Pie.value || currentExploration.chartType === TransactionExplorerChartType.Donut.value || currentExploration.chartType === TransactionExplorerChartType.NightingaleRose.value">
         <pie-chart
             :items="[
                 { id: '1', name: '---', value: parseBigDecimal(60), color: '7c7c7f' },
@@ -94,6 +94,7 @@
                 { id: '3', name: '---', value: parseBigDecimal(20), color: 'c5c5c9' }
             ]"
             :value-type="ChartValueType.Amount"
+            :style-type="currentExploration.chartType"
             :skeleton="true"
             :use-custom-color="true"
             v-if="loading"
@@ -101,6 +102,7 @@
         <pie-chart
             :items="categoryDimensionTransactionExplorerData && categoryDimensionTransactionExplorerData.length ? categoryDimensionTransactionExplorerData : []"
             :value-type="TransactionExplorerValueMetric.valueOf(currentExploration.valueMetric)?.valueType ?? ChartValueType.Number"
+            :style-type="currentExploration.chartType"
             :show-value="true"
             :show-percent="true"
             :enable-click-item="true"
@@ -146,6 +148,7 @@
         <axis-chart
             ref="axisChart"
             :type="axisChartDisplayType"
+            :smooth-curve="axisChartSmoothCurve"
             :stacked="axisChartStacked"
             :one-hundred-percent-stacked="axisChart100PercentStacked"
             :sorting-type="currentExploration.chartSortingType"
@@ -375,6 +378,8 @@ const allAmountRangeCounts = computed<NameNumeralValue[]>(() => {
 
 const categoryDimensionTransactionExplorerData = computed<CategoryDimensionData[]>(() => {
     if (currentExploration.value.chartType !== TransactionExplorerChartType.Pie.value
+        && currentExploration.value.chartType !== TransactionExplorerChartType.Donut.value
+        && currentExploration.value.chartType !== TransactionExplorerChartType.NightingaleRose.value
         && currentExploration.value.chartType !== TransactionExplorerChartType.Radar.value
         && currentExploration.value.chartType !== TransactionExplorerChartType.CalendarHeatmap.value) {
         return [];
@@ -576,10 +581,13 @@ const axisChartDisplayType = computed<AxisChartDisplayType | undefined>(() => {
         || currentExploration.value.chartType === TransactionExplorerChartType.Column100PercentStacked.value
         || currentExploration.value.chartType === TransactionExplorerChartType.ColumnGrouped.value) {
         return 'column';
-    } else if (currentExploration.value.chartType === TransactionExplorerChartType.LineGrouped.value) {
+    } else if (currentExploration.value.chartType === TransactionExplorerChartType.LineGrouped.value
+        || currentExploration.value.chartType === TransactionExplorerChartType.SmoothLineGrouped.value) {
         return 'line';
     } else if (currentExploration.value.chartType === TransactionExplorerChartType.AreaStacked.value
-        || currentExploration.value.chartType === TransactionExplorerChartType.Area100PercentStacked.value) {
+        || currentExploration.value.chartType === TransactionExplorerChartType.Area100PercentStacked.value
+        || currentExploration.value.chartType === TransactionExplorerChartType.SmoothAreaStacked.value
+        || currentExploration.value.chartType === TransactionExplorerChartType.SmoothArea100PercentStacked.value) {
         return 'area';
     } else if (currentExploration.value.chartType === TransactionExplorerChartType.BubbleGrouped.value) {
         return 'bubble';
@@ -598,16 +606,25 @@ const hierarchyChartDisplayType = computed<HierarchyChartDisplayType | undefined
     }
 });
 
+const axisChartSmoothCurve = computed<boolean>(() => {
+    return (currentExploration.value.chartType === TransactionExplorerChartType.SmoothLineGrouped.value
+        || currentExploration.value.chartType === TransactionExplorerChartType.SmoothAreaStacked.value
+        || currentExploration.value.chartType === TransactionExplorerChartType.SmoothArea100PercentStacked.value);
+});
+
 const axisChartStacked = computed<boolean>(() => {
     return (currentExploration.value.chartType === TransactionExplorerChartType.ColumnStacked.value
         || currentExploration.value.chartType === TransactionExplorerChartType.Column100PercentStacked.value
         || currentExploration.value.chartType === TransactionExplorerChartType.AreaStacked.value
-        || currentExploration.value.chartType === TransactionExplorerChartType.Area100PercentStacked.value);
+        || currentExploration.value.chartType === TransactionExplorerChartType.Area100PercentStacked.value
+        || currentExploration.value.chartType === TransactionExplorerChartType.SmoothAreaStacked.value
+        || currentExploration.value.chartType === TransactionExplorerChartType.SmoothArea100PercentStacked.value);
 });
 
 const axisChart100PercentStacked = computed<boolean>(() => {
     return (currentExploration.value.chartType === TransactionExplorerChartType.Column100PercentStacked.value
-        || currentExploration.value.chartType === TransactionExplorerChartType.Area100PercentStacked.value);
+        || currentExploration.value.chartType === TransactionExplorerChartType.Area100PercentStacked.value
+        || currentExploration.value.chartType === TransactionExplorerChartType.SmoothArea100PercentStacked.value);
 });
 
 const axisChartShowYearOverYear = computed<boolean>(() => {
@@ -988,7 +1005,11 @@ function onClickTransaction(transaction: TransactionInsightDataItem): void {
 }
 
 function buildExportResults(): { headers: string[], data: string[][], supportedMermaidCharts?: ExportMermaidChartType[] } | undefined {
-    if (currentExploration.value.chartType === TransactionExplorerChartType.Pie.value || currentExploration.value.chartType === TransactionExplorerChartType.Radar.value || currentExploration.value.chartType === TransactionExplorerChartType.CalendarHeatmap.value) {
+    if (currentExploration.value.chartType === TransactionExplorerChartType.Pie.value
+        || currentExploration.value.chartType === TransactionExplorerChartType.Donut.value
+        || currentExploration.value.chartType === TransactionExplorerChartType.NightingaleRose.value
+        || currentExploration.value.chartType === TransactionExplorerChartType.Radar.value
+        || currentExploration.value.chartType === TransactionExplorerChartType.CalendarHeatmap.value) {
         const valueMetric = TransactionExplorerValueMetric.valueOf(currentExploration.value.valueMetric);
         let supportedMermaidCharts: ExportMermaidChartType[] | undefined = undefined;
 
@@ -1027,11 +1048,14 @@ function buildExportResults(): { headers: string[], data: string[][], supportedM
         } else if (results.headers.length === 2 &&
             (
                 currentExploration.value.chartType === TransactionExplorerChartType.AreaStacked.value ||
-                currentExploration.value.chartType === TransactionExplorerChartType.Area100PercentStacked.value
+                currentExploration.value.chartType === TransactionExplorerChartType.Area100PercentStacked.value ||
+                currentExploration.value.chartType === TransactionExplorerChartType.SmoothAreaStacked.value ||
+                currentExploration.value.chartType === TransactionExplorerChartType.SmoothArea100PercentStacked.value
             )
         ) {
             supportedMermaidCharts = [ ExportMermaidChartType.XYChartLine ];
-        } else if (currentExploration.value.chartType === TransactionExplorerChartType.LineGrouped.value) {
+        } else if (currentExploration.value.chartType === TransactionExplorerChartType.LineGrouped.value
+            || currentExploration.value.chartType === TransactionExplorerChartType.SmoothLineGrouped.value) {
             supportedMermaidCharts = [ ExportMermaidChartType.XYChartLine ];
         }
 

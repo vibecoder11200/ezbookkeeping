@@ -44,17 +44,17 @@ export function useAccountListPageBase() {
     const maxCategoryAccountCount = computed<number>(() => accountsStore.maxCategoryAccountCount);
 
     const netAssets = computed<string>(() => {
-        const netAssets: BigDecimal | HiddenAmount | BigDecimalWithSuffix = accountsStore.getNetAssets(showAccountBalance.value);
+        const netAssets: BigDecimal | HiddenAmount | BigDecimalWithSuffix = accountsStore.getNetAssets(showAccountBalance.value, settingsStore.appSettings.totalAmountExcludeAccountIds);
         return formatAmountToLocalizedNumeralsWithCurrency(netAssets, defaultCurrency.value);
     });
 
     const totalAssets = computed<string>(() => {
-        const totalAssets: BigDecimal | HiddenAmount | BigDecimalWithSuffix = accountsStore.getTotalAssets(showAccountBalance.value);
+        const totalAssets: BigDecimal | HiddenAmount | BigDecimalWithSuffix = accountsStore.getTotalAssets(showAccountBalance.value, settingsStore.appSettings.totalAmountExcludeAccountIds);
         return formatAmountToLocalizedNumeralsWithCurrency(totalAssets, defaultCurrency.value);
     });
 
     const totalLiabilities = computed<string>(() => {
-        const totalLiabilities: BigDecimal | HiddenAmount | BigDecimalWithSuffix = accountsStore.getTotalLiabilities(showAccountBalance.value);
+        const totalLiabilities: BigDecimal | HiddenAmount | BigDecimalWithSuffix = accountsStore.getTotalLiabilities(showAccountBalance.value, settingsStore.appSettings.totalAmountExcludeAccountIds);
         return formatAmountToLocalizedNumeralsWithCurrency(totalLiabilities, defaultCurrency.value);
     });
 
@@ -67,9 +67,9 @@ export function useAccountListPageBase() {
         return formatAmountToLocalizedNumeralsWithCurrency(totalBalance, defaultCurrency.value);
     }
 
-    function accountBalance(account: Account, currentSubAccountId?: string): string | null {
+    function accountBalance(account: Account, currentSubAccountId: string | undefined, showBalance: boolean, onlyShowSelectedAccountIds?: string[]): string | null {
         if (account.type === AccountType.SingleAccount.type) {
-            const balance: BigDecimal | HiddenAmount | null = accountsStore.getAccountBalance(showAccountBalance.value, account);
+            const balance: BigDecimal | HiddenAmount | null = accountsStore.getAccountBalance(showBalance, account);
 
             if (isBigDecimal(balance) || isString(balance)) {
                 return formatAmountToLocalizedNumeralsWithCurrency(balance, account.currency);
@@ -77,7 +77,7 @@ export function useAccountListPageBase() {
                 return '';
             }
         } else if (account.type === AccountType.MultiSubAccounts.type) {
-            const balanceResult = accountsStore.getAccountSubAccountBalance(showAccountBalance.value, showHidden.value, account, currentSubAccountId);
+            const balanceResult = accountsStore.getAccountSubAccountBalance(showBalance, showHidden.value, account, currentSubAccountId, onlyShowSelectedAccountIds);
 
             if (!isObject(balanceResult)) {
                 return '';

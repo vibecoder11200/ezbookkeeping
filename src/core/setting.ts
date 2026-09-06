@@ -32,23 +32,24 @@ export interface BaseApplicationSetting {
 export interface ApplicationSettings extends BaseApplicationSetting {
     // Debug Settings
     debug: boolean;
-    // Basic Settings
+    // General Settings
     theme: string;
     fontSize: number;
     timeZone: string;
     autoUpdateExchangeRatesData: boolean;
     showAccountBalance: boolean;
+    accountCategoryOrders: string;
+    chartColors: string;
     swipeBack: boolean;
     animate: boolean;
     // Application Lock
     applicationLock: boolean;
     applicationLockWebAuthn: boolean;
-    // General Settings
-    chartColors: string;
     // Navigation Bar
     showAddTransactionButtonInDesktopNavbar: boolean;
     // Overview Page
     desktopOverviewPageLayout: string;
+    mobileOverviewPageLayout: string;
     showAmountInHomePage: boolean;
     timezoneUsedForStatisticsInHomePage: number;
     overviewAccountFilterInHomePage: Record<string, boolean>;
@@ -77,7 +78,6 @@ export interface ApplicationSettings extends BaseApplicationSetting {
     showTagInInsightsExplorerPage: boolean;
     // Account List Page
     totalAmountExcludeAccountIds: Record<string, boolean>;
-    accountCategoryOrders: string;
     hideCategoriesWithoutAccounts: boolean;
     reconciliationStatementButtonDefaultDateRangeTypeInDesktop: number;
     reconciliationStatementPageDefaultDateRangeTypeInMobile: number;
@@ -130,15 +130,16 @@ export interface WebAuthnConfig {
 }
 
 export const ALL_ALLOWED_CLOUD_SYNC_APP_SETTING_KEY_TYPES: Record<string, UserApplicationCloudSettingType> = {
-    // Basic Settings
-    'showAccountBalance': UserApplicationCloudSettingType.Boolean,
-    'autoUpdateExchangeRatesData': UserApplicationCloudSettingType.Boolean,
     // General Settings
+    'showAccountBalance': UserApplicationCloudSettingType.Boolean,
+    'accountCategoryOrders': UserApplicationCloudSettingType.String,
+    'autoUpdateExchangeRatesData': UserApplicationCloudSettingType.Boolean,
     'chartColors': UserApplicationCloudSettingType.String,
     // Navigation Bar
     'showAddTransactionButtonInDesktopNavbar': UserApplicationCloudSettingType.Boolean,
     // Overview Page
     'desktopOverviewPageLayout': UserApplicationCloudSettingType.String,
+    'mobileOverviewPageLayout': UserApplicationCloudSettingType.String,
     'showAmountInHomePage': UserApplicationCloudSettingType.Boolean,
     'timezoneUsedForStatisticsInHomePage': UserApplicationCloudSettingType.Number,
     'overviewAccountFilterInHomePage': UserApplicationCloudSettingType.StringBooleanMap,
@@ -167,7 +168,6 @@ export const ALL_ALLOWED_CLOUD_SYNC_APP_SETTING_KEY_TYPES: Record<string, UserAp
     'showTagInInsightsExplorerPage': UserApplicationCloudSettingType.Boolean,
     // Account List Page
     'totalAmountExcludeAccountIds': UserApplicationCloudSettingType.StringBooleanMap,
-    'accountCategoryOrders': UserApplicationCloudSettingType.String,
     'hideCategoriesWithoutAccounts': UserApplicationCloudSettingType.Boolean,
     'reconciliationStatementButtonDefaultDateRangeTypeInDesktop': UserApplicationCloudSettingType.Number,
     'reconciliationStatementPageDefaultDateRangeTypeInMobile': UserApplicationCloudSettingType.Number,
@@ -194,23 +194,24 @@ export const ALL_ALLOWED_CLOUD_SYNC_APP_SETTING_KEY_TYPES: Record<string, UserAp
 export const DEFAULT_APPLICATION_SETTINGS: ApplicationSettings = {
     // Debug Settings
     debug: false,
-    // Basic Settings
+    // General Settings
     theme: 'auto',
     fontSize: 1,
     timeZone: '',
     autoUpdateExchangeRatesData: true,
     showAccountBalance: true,
+    accountCategoryOrders: '',
+    chartColors: '',
     swipeBack: true,
     animate: true,
     // Application Lock
     applicationLock: false,
     applicationLockWebAuthn: false,
-    // General Settings
-    chartColors: '',
     // Navigation Bar
     showAddTransactionButtonInDesktopNavbar: true,
     // Overview Page
     desktopOverviewPageLayout: '',
+    mobileOverviewPageLayout: '',
     showAmountInHomePage: true,
     timezoneUsedForStatisticsInHomePage: TimezoneTypeForStatistics.Default.type,
     overviewAccountFilterInHomePage: {},
@@ -239,7 +240,6 @@ export const DEFAULT_APPLICATION_SETTINGS: ApplicationSettings = {
     showTagInInsightsExplorerPage: true,
     // Account List Page
     totalAmountExcludeAccountIds: {},
-    accountCategoryOrders: '',
     hideCategoriesWithoutAccounts: false,
     reconciliationStatementButtonDefaultDateRangeTypeInDesktop: DEFAULT_RECONCILIATION_STATEMENT_DATE_RANGE_IN_DESKTOP.type,
     reconciliationStatementPageDefaultDateRangeTypeInMobile: DEFAULT_RECONCILIATION_STATEMENT_DATE_RANGE_IN_MOBILE.type,

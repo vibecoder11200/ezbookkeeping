@@ -20,13 +20,17 @@ import { useTransactionCategoriesStore } from '@/stores/transactionCategory.ts';
 import { useOverviewStore } from '@/stores/overview.ts';
 
 import { type DesktopOverviewLayout, OverviewWidgetDataRequirement } from '@/core/overview_layout.ts';
-import { DEFAULT_DESKTOP_OVERVIEW_LAYOUT } from '@/consts/overview_layout.ts';
+import { DESKTOP_OVERVIEW_WIDGET_DEFINITIONS, DEFAULT_DESKTOP_OVERVIEW_LAYOUT } from '@/consts/overview_layout.ts';
 
 import { isUserLogined, isUserUnlocked } from '@/lib/userstate.ts';
 import { getShareCacheImageBlob } from '@/lib/cache.ts';
 import {
     getOverviewDataRequirements,
     getOverviewTransactionOverviewMonths,
+    getOverviewRecentTransactionsQueries,
+    getOverviewAssetTrendMonths,
+    getOverviewCalendarHeatmapMonths,
+    getOverviewTransactionCategoryStatisticDateTypes,
     parseDesktopOverviewLayout
 } from '@/lib/overview_layout.ts';
 import logger from '@/lib/logger.ts';
@@ -62,7 +66,7 @@ function clearShareImageCache(): void {
 function reload(force: boolean): void {
     loadingOverview.value = true;
 
-    const requirements: OverviewWidgetDataRequirement[] = getOverviewDataRequirements(layout.value);
+    const requirements: OverviewWidgetDataRequirement[] = getOverviewDataRequirements(layout.value, DESKTOP_OVERVIEW_WIDGET_DEFINITIONS);
     const promises: Promise<unknown>[] = [
         accountsStore.loadAllAccounts({ force: false }),
         transactionCategoriesStore.loadAllCategories({ force: false })
@@ -72,6 +76,42 @@ function reload(force: boolean): void {
         promises.push(overviewStore.loadTransactionOverview({
             force: force,
             months: getOverviewTransactionOverviewMonths(layout.value)
+        }));
+    }
+
+    if (requirements.includes(OverviewWidgetDataRequirement.TransactionCategoryStatistics)) {
+        for (const dateType of getOverviewTransactionCategoryStatisticDateTypes(layout.value)) {
+            promises.push(overviewStore.loadTransactionCategoryStatistics({
+                force: force,
+                dateType: dateType
+            }));
+        }
+    }
+
+    if (requirements.includes(OverviewWidgetDataRequirement.AssetTrends)) {
+        promises.push(overviewStore.loadTransactionAssetTrends({
+            force: force,
+            months: getOverviewAssetTrendMonths(layout.value)
+        }));
+    }
+
+    if (requirements.includes(OverviewWidgetDataRequirement.RecentTransactions)) {
+        promises.push(overviewStore.loadRecentTransactions({
+            force: force,
+            queries: getOverviewRecentTransactionsQueries(layout.value)
+        }));
+    }
+
+    if (requirements.includes(OverviewWidgetDataRequirement.CurrentMonthTransactions)) {
+        promises.push(overviewStore.loadCurrentMonthTransactions({
+            force: force
+        }));
+    }
+
+    if (requirements.includes(OverviewWidgetDataRequirement.DailyTransactionAmounts)) {
+        promises.push(overviewStore.loadTransactionDailyAmounts({
+            force: force,
+            months: getOverviewCalendarHeatmapMonths(layout.value)
         }));
     }
 

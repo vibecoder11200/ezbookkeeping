@@ -386,12 +386,17 @@ export class TransactionExplorerValueMetric implements NameValue {
 
 export enum TransactionExplorerChartTypeValue {
     Pie = 'pie',
+    Donut = 'donut',
+    NightingaleRose = 'nightingaleRose',
     ColumnStacked = 'columnStacked',
     Column100PercentStacked = 'column100%Stacked',
     ColumnGrouped = 'columnGrouped',
     LineGrouped = 'lineGrouped',
+    SmoothLineGrouped = 'smoothLineGrouped',
     AreaStacked = 'areaStacked',
     Area100PercentStacked = 'area100%Stacked',
+    SmoothAreaStacked = 'smoothAreaStacked',
+    SmoothArea100PercentStacked = 'smoothArea100%Stacked',
     BubbleGrouped = 'bubbleGrouped',
     Radar = 'radar',
     Treemap = 'treemap',
@@ -405,13 +410,18 @@ export class TransactionExplorerChartType implements NameValue {
     private static readonly allInstancesByValue: Record<string, TransactionExplorerChartType> = {};
 
     public static readonly Pie = new TransactionExplorerChartType('Pie Chart', TransactionExplorerChartTypeValue.Pie, undefined, false, undefined);
+    public static readonly Donut = new TransactionExplorerChartType('Donut Chart', TransactionExplorerChartTypeValue.Donut, undefined, false, undefined);
+    public static readonly NightingaleRose = new TransactionExplorerChartType('Nightingale Rose Chart', TransactionExplorerChartTypeValue.NightingaleRose, undefined, false, undefined);
     public static readonly Radar = new TransactionExplorerChartType('Radar Chart', TransactionExplorerChartTypeValue.Radar, undefined, false, undefined);
     public static readonly ColumnStacked = new TransactionExplorerChartType('Column Chart (Stacked)', TransactionExplorerChartTypeValue.ColumnStacked, undefined, true, undefined);
     public static readonly Column100PercentStacked = new TransactionExplorerChartType('Column Chart (100% Stacked)', TransactionExplorerChartTypeValue.Column100PercentStacked, undefined, true, undefined);
     public static readonly ColumnGrouped = new TransactionExplorerChartType('Column Chart (Grouped)', TransactionExplorerChartTypeValue.ColumnGrouped, undefined, true, undefined);
     public static readonly LineGrouped = new TransactionExplorerChartType('Line Chart (Grouped)', TransactionExplorerChartTypeValue.LineGrouped, undefined, true, undefined);
+    public static readonly SmoothLineGrouped = new TransactionExplorerChartType('Smooth Line Chart (Grouped)', TransactionExplorerChartTypeValue.SmoothLineGrouped, undefined, true, undefined);
     public static readonly AreaStacked = new TransactionExplorerChartType('Area Chart (Stacked)', TransactionExplorerChartTypeValue.AreaStacked, undefined, true, undefined);
     public static readonly Area100PercentStacked = new TransactionExplorerChartType('Area Chart (100% Stacked)', TransactionExplorerChartTypeValue.Area100PercentStacked, undefined, true, undefined);
+    public static readonly SmoothAreaStacked = new TransactionExplorerChartType('Smooth Area Chart (Stacked)', TransactionExplorerChartTypeValue.SmoothAreaStacked, undefined, true, undefined);
+    public static readonly SmoothArea100PercentStacked = new TransactionExplorerChartType('Smooth Area Chart (100% Stacked)', TransactionExplorerChartTypeValue.SmoothArea100PercentStacked, undefined, true, undefined);
     public static readonly BubbleGrouped = new TransactionExplorerChartType('Bubble Chart (Grouped)', TransactionExplorerChartTypeValue.BubbleGrouped, undefined, true, undefined);
     public static readonly Treemap = new TransactionExplorerChartType('Treemap Chart', TransactionExplorerChartTypeValue.Treemap, undefined, true, undefined);
     public static readonly Sunburst = new TransactionExplorerChartType('Sunburst Chart', TransactionExplorerChartTypeValue.Sunburst, undefined, true, undefined);

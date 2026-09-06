@@ -20,6 +20,7 @@ import type { BigDecimal } from '@/core/numeral.ts';
 import type { ColorValue, ColorStyleValue } from '@/core/color.ts';
 import { ThemeType } from '@/core/theme.ts';
 import { type AxisChartSourceDataItem, ChartValueType } from '@/core/chart.ts';
+import { DISPLAY_HIDDEN_AMOUNT } from '@/consts/numeral.ts';
 
 import type { SortableTransactionStatisticDataItem } from '@/models/transaction.ts';
 
@@ -45,6 +46,8 @@ interface AxisChartDataItem {
     type: string;
     areaStyle?: object;
     stack?: string;
+    smooth?: boolean;
+    showSymbol?: boolean;
     symbolSize?: (data: number) => number;
     animation: boolean;
     data: number[];  // only used for echarts rendering, the actual value is in allOriginalData
@@ -61,8 +64,18 @@ interface AxisChartTooltipItem extends SortableTransactionStatisticDataItem {
 const props = defineProps<{
     class?: string;
     skeleton?: boolean;
+    noAnimation?: boolean;
     type: AxisChartDisplayType;
     stacked?: boolean;
+    hideLegend?: boolean;
+    legendPosition?: 'top' | 'bottom';
+    hideXAxisLabels?: boolean;
+    hideXAxisLine?: boolean;
+    hideYAxisLabels?: boolean;
+    hideHorizontalGridLines?: boolean;
+    hideLineSymbols?: boolean;
+    noMargin?: boolean;
+    smoothCurve?: boolean;
     oneHundredPercentStacked?: boolean;
     sortingType: number;
     showValue?: boolean;
@@ -92,6 +105,7 @@ const {
     getCurrentLanguageTextDirection,
     formatAmountToWesternArabicNumeralsWithoutDigitGrouping,
     formatBigDecimalToWesternArabicNumeralsWithoutDigitGrouping,
+    formatAmountToLocalizedNumeralsWithCurrency,
     formatChartValueToLocalizedNumerals
 } = useI18n();
 
@@ -183,7 +197,9 @@ const axisChartData = computed<AxisChartData>(() => {
             },
             selected: true,
             type: 'line',
-            animation: !props.skeleton,
+            smooth: props.smoothCurve,
+            showSymbol: !props.hideLineSymbols,
+            animation: props.noAnimation ? false : !props.skeleton,
             data: allAmounts.map(amount => amount.toDoubleNumber())
         };
 
@@ -414,9 +430,11 @@ const chartOptions = computed<object>(() => {
             }
         },
         legend: {
+            show: !props.hideLegend,
             orient: 'horizontal',
             type: 'scroll',
-            top: 0,
+            top: (!props.legendPosition || props.legendPosition === 'top') ? 0 : undefined,
+            bottom: props.legendPosition === 'bottom' ? 5 : undefined,
             data: axisChartData.value.allSeries.map(item => item.name),
             selected: selectedLegends.value,
             textStyle: {
@@ -425,16 +443,25 @@ const chartOptions = computed<object>(() => {
             formatter: (id: string) => allItemsMap.value[id] ? getItemName(allItemsMap.value[id].name) : id
         },
         grid: {
-            left: yAxisWidth.value,
-            right: 20,
-            bottom: 40
+            left: props.noMargin ? 0 : (props.hideYAxisLabels ? 10 : yAxisWidth.value),
+            top: props.noMargin ? 0 : (!props.hideLegend && (!props.legendPosition || props.legendPosition === 'top') ? 50 : 5),
+            right: props.noMargin ? 0 : 10,
+            bottom: props.noMargin ? 0 : ((props.hideXAxisLabels ? 10 : 30) + (!props.hideLegend && props.legendPosition === 'bottom' ? 25 : 0)),
         },
         xAxis: [
             {
                 type: 'category',
                 data: props.allCategoryNames,
+                boundaryGap: !props.hideYAxisLabels,
                 inverse: textDirection.value === TextDirection.RTL,
+                axisLine: {
+                    show: !props.hideXAxisLine
+                },
+                axisTick: {
+                    show: !props.hideXAxisLine
+                },
                 axisLabel: {
+                    show: !props.hideXAxisLabels,
                     color: isDarkMode.value ? '#888' : '#666'
                 }
             }
@@ -445,6 +472,7 @@ const chartOptions = computed<object>(() => {
                 min: props.oneHundredPercentStacked ? 0 : undefined,
                 max: props.oneHundredPercentStacked ? 100 : undefined,
                 axisLabel: {
+                    show: !props.hideYAxisLabels && (props.showValue !== false || props.valueType !== ChartValueType.Amount),
                     color: isDarkMode.value ? '#888' : '#666',
                     formatter: (value: number) => {
                         return getDisplayValue(parseBigDecimal(value));
@@ -452,12 +480,14 @@ const chartOptions = computed<object>(() => {
                 },
                 axisPointer: {
                     label: {
+                        show: props.showValue !== false || props.valueType !== ChartValueType.Amount,
                         formatter: (params: CallbackDataParams) => {
                             return getDisplayValue(parseBigDecimal(params.value as number).truncate());
                         }
                     }
                 },
                 splitLine: {
+                    show: !props.hideHorizontalGridLines,
                     lineStyle: {
                         color: isDarkMode.value ? '#4f4f4f' : '#e1e6f2',
                     }
@@ -473,6 +503,10 @@ function getItemName(name: string): string {
 }
 
 function getDisplayValue(value: BigDecimal): string {
+    if (props.showValue === false && props.valueType === ChartValueType.Amount) {
+        return formatAmountToLocalizedNumeralsWithCurrency(DISPLAY_HIDDEN_AMOUNT, props.defaultCurrency);
+    }
+
     if (props.oneHundredPercentStacked) {
         return formatChartValueToLocalizedNumerals(value, ChartValueType.Percent, props.defaultCurrency);
     } else {

@@ -447,9 +447,9 @@ export const useTransactionsStore = defineStore('transactions', () => {
         }
     }
 
-    function fillTransactionObject(transaction: Transaction): void {
+    function fillTransactionObject(transaction: Transaction): Transaction {
         if (!transaction) {
-            return;
+            return transaction;
         }
 
         const transactionTime = parseDateTimeFromUnixTimeWithTimezoneOffset(transaction.time, transaction.utcOffset);
@@ -466,6 +466,8 @@ export const useTransactionsStore = defineStore('transactions', () => {
         if (transaction.categoryId) {
             transaction.setCategory(transactionCategoriesStore.allTransactionCategoriesMap[transaction.categoryId]);
         }
+
+        return transaction;
     }
 
     function initTransactionDraft(): void {
@@ -561,6 +563,27 @@ export const useTransactionsStore = defineStore('transactions', () => {
     function clearTransactionDraft(): void {
         transactionDraft.value = null;
         clearUserTransactionDraft();
+    }
+
+    function getCurrentMonthTransactionDailyTotalAmounts(transactions: TransactionInfoResponse[], accountIds: string): Record<string, TransactionTotalAmount> {
+        const monthList: TransactionMonthList = {
+            year: 0,
+            month: 0,
+            yearDashMonth: '0-0',
+            opened: true,
+            items: transactions.map(transaction => fillTransactionObject(Transaction.of(transaction))),
+            totalAmount: {
+                expense: BIG_DECIMAL_ZERO,
+                incompleteExpense: true,
+                income: BIG_DECIMAL_ZERO,
+                incompleteIncome: true
+            },
+            dailyTotalAmounts: {}
+        };
+
+        calculateMonthTotalAmount(monthList, userStore.currentUserDefaultCurrency, accountIds, false);
+
+        return monthList.dailyTotalAmounts;
     }
 
     function setTransactionSuitableDestinationAmount(transaction: Transaction, oldSourceAmount: number, newSourceAmount: number, oldSourceAccountId?: string, oldDestinationAccountId?: string): void {
@@ -1717,6 +1740,7 @@ export const useTransactionsStore = defineStore('transactions', () => {
         isTransactionDraftModified,
         saveTransactionDraft,
         clearTransactionDraft,
+        getCurrentMonthTransactionDailyTotalAmounts,
         setTransactionSuitableDestinationAmount,
         updateTransactionListInvalidState,
         updateTransactionReconciliationStatementInvalidState,

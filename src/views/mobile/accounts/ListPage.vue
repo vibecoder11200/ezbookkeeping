@@ -3,13 +3,13 @@
         <f7-navbar>
             <f7-nav-left :class="{ 'disabled': loading }" :back-link="tt('Back')" v-if="!sortable"></f7-nav-left>
             <f7-nav-left v-else-if="sortable">
-                <f7-link icon-f7="xmark" :class="{ 'disabled': displayOrderSaving }" @click="cancelSort"></f7-link>
+                <f7-link icon-f7="xmark" :class="{ 'disabled': displayOrderSaving }" :aria-label="tt('Cancel')" @click="cancelSort"></f7-link>
             </f7-nav-left>
             <f7-nav-title :title="tt('Account List')"></f7-nav-title>
             <f7-nav-right :class="{ 'navbar-compact-icons': true, 'disabled': loading }">
-                <f7-link icon-f7="ellipsis" :class="{ 'disabled': !allAccountCount || sortable }" @click="showMoreActionSheet = true"></f7-link>
-                <f7-link icon-f7="plus" href="/account/add" v-if="!sortable"></f7-link>
-                <f7-link icon-f7="checkmark_alt" :class="{ 'disabled': displayOrderSaving || !displayOrderModified }" @click="saveSortResult" v-else-if="sortable"></f7-link>
+                <f7-link icon-f7="ellipsis" :class="{ 'disabled': !allAccountCount || sortable }" :aria-label="tt('More')" @click="showMoreActionSheet = true"></f7-link>
+                <f7-link icon-f7="plus" href="/account/add" :aria-label="tt('Add')" v-if="!sortable"></f7-link>
+                <f7-link icon-f7="checkmark_alt" :class="{ 'disabled': displayOrderSaving || !displayOrderModified }" :aria-label="tt('Save')" @click="saveSortResult" v-else-if="sortable"></f7-link>
             </f7-nav-right>
         </f7-navbar>
 
@@ -22,7 +22,7 @@
                 <p class="no-margin">
                     <span class="net-assets" v-if="loading">0.00 USD</span>
                     <span class="net-assets" v-else-if="!loading">{{ netAssets }}</span>
-                    <f7-link class="display-inline-flex margin-inline-start-half" @click="showAccountBalance = !showAccountBalance">
+                    <f7-link class="display-inline-flex margin-inline-start-half" :aria-label="showAccountBalance ? tt('Hide Account Balance') : tt('Show Account Balance')" @click="showAccountBalance = !showAccountBalance">
                         <f7-icon class="ebk-hide-icon" :f7="showAccountBalance ? 'eye_slash_fill' : 'eye_fill'"></f7-icon>
                     </f7-link>
                 </p>
@@ -87,7 +87,7 @@
                               class="nested-list-item"
                               :id="getAccountDomId(account)"
                               :class="{ 'has-child-list-item': account.type === AccountType.MultiSubAccounts.type && hasVisibleSubAccount(account), 'actual-first-child': account.id === firstShowingIds.accounts[accountCategory.type], 'actual-last-child': account.id === lastShowingIds.accounts[accountCategory.type] }"
-                              :after="account.type === AccountType.SingleAccount.type ? accountBalance(account) : ''"
+                              :after="account.type === AccountType.SingleAccount.type ? accountBalance(account, undefined, showAccountBalance) : ''"
                               :link="!sortable ? '/transaction/list?accountIds=' + account.id : null"
                               :key="account.id"
                               v-for="account in allCategorizedAccountsMap[accountCategory.type]!.accounts"
@@ -115,7 +115,7 @@
                                 <div class="item-footer" v-if="account.comment">{{ account.comment }}</div>
                             </div>
                             <div class="nested-list-item-after" v-if="account.type === AccountType.MultiSubAccounts.type">
-                                <span>{{ accountBalance(account) }}</span>
+                                <span>{{ accountBalance(account, undefined, showAccountBalance) }}</span>
                             </div>
                         </div>
                         <li v-if="account.type === AccountType.MultiSubAccounts.type">
@@ -123,7 +123,7 @@
                                 <f7-list-item class="no-sortable nested-list-item-child"
                                               :class="{ 'actual-first-child': subAccount.id === firstShowingIds.subAccounts[account.id], 'actual-last-child': subAccount.id === lastShowingIds.subAccounts[account.id] }"
                                               :id="getAccountDomId(subAccount)"
-                                              :title="subAccount.name" :footer="subAccount.comment" :after="accountBalance(account, subAccount.id)"
+                                              :title="subAccount.name" :footer="subAccount.comment" :after="accountBalance(account, subAccount.id, showAccountBalance)"
                                               :link="!sortable ? '/transaction/list?accountIds=' + subAccount.id : null"
                                               :key="subAccount.id"
                                               v-for="subAccount in account.subAccounts"
@@ -143,8 +143,10 @@
                     <f7-swipeout-actions :left="textDirection === TextDirection.LTR"
                                          :right="textDirection === TextDirection.RTL"
                                          v-if="sortable">
-                        <f7-swipeout-button :color="account.hidden ? 'blue' : 'gray'" class="padding-horizontal"
-                                            overswipe close @click="hide(account, !account.hidden)">
+                        <f7-swipeout-button class="padding-horizontal" overswipe close
+                                            :aria-label="account.hidden ? tt('Show') : tt('Hide')"
+                                            :color="account.hidden ? 'blue' : 'gray'"
+                                            @click="hide(account, !account.hidden)">
                             <f7-icon :f7="account.hidden ? 'eye' : 'eye_slash'"></f7-icon>
                         </f7-swipeout-button>
                     </f7-swipeout-actions>
@@ -153,7 +155,7 @@
                                          v-if="!sortable">
                         <f7-swipeout-button color="orange" close :text="tt('Edit')" @click="edit(account)"></f7-swipeout-button>
                         <f7-swipeout-button color="primary" close :text="tt('More')" @click="showMoreActionSheetForAccount(account)"></f7-swipeout-button>
-                        <f7-swipeout-button color="red" class="padding-horizontal" @click="remove(account, false)">
+                        <f7-swipeout-button color="red" class="padding-horizontal" :aria-label="tt('Delete')" @click="remove(account, false)">
                             <f7-icon f7="trash"></f7-icon>
                         </f7-swipeout-button>
                     </f7-swipeout-actions>

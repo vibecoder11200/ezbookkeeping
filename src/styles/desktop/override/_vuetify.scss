@@ -349,9 +349,23 @@
 
 .v-chip {
     border-radius: var(--ebk-radius-sm);
+
+    &.v-chip--size-x-small {
+        font-size: 0.75rem;
+    }
+
+    .v-chip__prepend .v-icon {
+        font-size: inherit;
+        margin-inline-end: 0.2em;
+    }
 }
 
 .v-switch {
+    &.v-switch--size-default .v-selection-control__input {
+        width: 24px;
+        height: 24px;
+    }
+
     .v-selection-control:not(.v-selection-control--dirty) .v-switch__track {
         opacity: 0.5;
     }

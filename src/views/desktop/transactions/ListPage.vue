@@ -10,7 +10,7 @@
                 })" v-model="queryPageType" />
             </div>
             <v-divider class="my-2" />
-            <div class="mt-2">
+            <div class="my-2">
                 <span class="mx-3 text-body-medium">{{ tt('Transaction Type') }}</span>
                 <v-select
                     item-title="displayName"
@@ -110,8 +110,8 @@
                                         </v-list>
                                     </v-menu>
                                 </v-btn>
-                                <v-btn density="compact" color="default" variant="text"
-                                       class="ms-2" :icon="true" :loading="loading" @click="reload(true, false)">
+                                <v-btn density="compact" color="default" variant="text" class="ms-2"
+                                       :aria-label="tt('Refresh')" :icon="true" :loading="loading" @click="reload(true, false)">
                                     <template #loader>
                                         <v-progress-circular indeterminate size="20"/>
                                     </template>
@@ -143,14 +143,14 @@
                                       v-else-if="query.minTime || query.maxTime">
                                     <v-btn class="button-icon-with-direction" size="small"
                                            density="compact" color="default" variant="outlined"
-                                           :icon="true" :disabled="loading"
+                                           :aria-label="tt('Previous Period')" :disabled="loading" :icon="true"
                                            @click="shiftDateRange(query.minTime, query.maxTime, -1)">
                                         <v-icon :icon="mdiArrowLeft" size="14" />
                                     </v-btn>
-                                    <span class="text-body-medium mx-1">{{ `${queryMinTime} - ${queryMaxTime}` }}</span>
+                                    <span class="text-body-medium mx-1">{{ formatRange(queryMinTime, queryMaxTime) }}</span>
                                     <v-btn class="button-icon-with-direction" size="small"
                                            density="compact" color="default" variant="outlined"
-                                           :icon="true" :disabled="loading"
+                                           :aria-label="tt('Next Period')" :disabled="loading" :icon="true"
                                            @click="shiftDateRange(query.minTime, query.maxTime, 1)">
                                         <v-icon :icon="mdiArrowRight" size="14" />
                                     </v-btn>
@@ -182,7 +182,8 @@
                         </v-card-text>
 
                         <v-card-text class="transaction-calendar-container pt-0" v-if="pageType === TransactionListPageType.Calendar.type">
-                            <transaction-calendar day-has-transaction-class="font-weight-bold"
+                            <transaction-calendar show-amount show-income-amount show-expense-amount show-alternate-date
+                                                  day-has-transaction-class="font-weight-bold"
                                                   :readonly="loading" :is-dark-mode="isDarkMode"
                                                   :default-currency="selectedAccountDefaultCurrency"
                                                   :min-date="transactionCalendarMinDate"
@@ -366,7 +367,7 @@
                                                                           :currency="selectedAccountDefaultCurrency"
                                                                           v-model="currentAmountFilterValue1"
                                                                           v-if="currentAmountFilterType === filterType.type"/>
-                                                            <span class="ms-2 me-2" v-if="currentAmountFilterType === filterType.type && filterType.paramCount === 2">~</span>
+                                                            <span class="ms-2 me-2" v-if="currentAmountFilterType === filterType.type && filterType.paramCount === 2">{{ tt('format.misc.rangeSeparator') }}</span>
                                                             <amount-input class="transaction-amount-filter-value" density="compact"
                                                                           :currency="selectedAccountDefaultCurrency"
                                                                           v-model="currentAmountFilterValue2"
@@ -554,7 +555,7 @@
                                     <td class="transaction-table-column-time">
                                         <div class="d-flex flex-column">
                                             <span>{{ getDisplayTime(transaction) }}</span>
-                                            <span class="text-body-small" v-if="!isSameAsDefaultTimezoneOffsetMinutes(transaction)">{{ getDisplayTimezone(transaction) }}</span>
+                                            <span class="text-body-small text-medium-emphasis" v-if="!isSameAsDefaultTimezoneOffsetMinutes(transaction)">{{ getDisplayTimezone(transaction) }}</span>
                                             <v-tooltip activator="parent" v-if="!isSameAsDefaultTimezoneOffsetMinutes(transaction)">{{ getDisplayTimeInDefaultTimezone(transaction) }}</v-tooltip>
                                         </div>
                                     </td>
@@ -847,6 +848,7 @@ const theme = useTheme();
 
 const {
     tt,
+    formatRange,
     getAllRecentMonthDateRanges,
     getWeekdayLongName,
     getTablePageOptions
@@ -1970,43 +1972,6 @@ init(props);
 .transaction-account-menu .item-in-multiple-selection span,
 .transaction-tag-menu .item-in-multiple-selection span {
     font-weight: bold;
-}
-
-.transaction-calendar-container .dp--main {
-    &.transaction-calendar-with-alternate-date .dp--calendar .dp--calendar-row {
-        --dp-cell-size: 90px;
-    }
-
-    .dp--menu {
-        --dp-border-radius: 6px;
-        --dp-menu-border-color: rgba(var(--v-border-color), var(--v-border-opacity));
-    }
-
-    .dp--calendar {
-        --dp-border-color: rgba(var(--v-border-color), var(--v-border-opacity));
-
-        .dp--calendar-header {
-            --dp-cell-size: 32px;
-        }
-
-        .dp--calendar-row {
-            --dp-cell-size: 76px;
-            --dp-primary-color: rgba(var(--v-theme-primary), var(--v-activated-opacity));
-            --dp-primary-text-color: rgb(var(--v-theme-primary));
-
-            > .dp--calendar-item {
-                overflow: hidden;
-
-                .transaction-calendar-daily-amounts > span.transaction-calendar-alternate-date {
-                    font-size: 0.9rem;
-                }
-
-                .transaction-calendar-daily-amounts > span.transaction-calendar-daily-amount {
-                    font-size: 0.95rem;
-                }
-            }
-        }
-    }
 }
 
 .transaction-gallery-container {

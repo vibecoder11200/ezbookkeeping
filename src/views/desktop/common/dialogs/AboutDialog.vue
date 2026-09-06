@@ -10,8 +10,8 @@
                             <template #title>
                                 <div class="d-flex align-center">
                                     <span>{{ tt('global.app.title') }}</span>
-                                    <v-btn density="compact" color="default" variant="text"
-                                           class="ms-2" :icon="true" @click="refreshBrowserCache"
+                                    <v-btn density="compact" color="default" variant="text" class="ms-2"
+                                           :aria-label="tt('Refresh Browser Cache')" :icon="true" @click="refreshBrowserCache"
                                            v-if="!clientVersionMatchServerVersion">
                                         <v-icon :icon="mdiWebRefresh" size="24" />
                                         <v-tooltip activator="parent">{{ tt('Refresh Browser Cache') }}</v-tooltip>
@@ -197,7 +197,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, watch } from 'vue';
 
 import type { LanguageOption } from '@/locales';
 import { useI18n } from '@/locales/helpers.ts';
@@ -242,7 +242,11 @@ const showState = computed<boolean>({
 
 const allLanguages = computed<LanguageOption[]>(() => getAllLanguageOptions(false));
 
-init();
+watch(() => props.show, (newValue) => {
+    if (newValue) {
+        init();
+    }
+});
 </script>
 
 <style>

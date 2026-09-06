@@ -73,11 +73,12 @@
             </template>
             <template #item.valid="{ item }">
                 <v-icon size="small" :class="{ 'text-error': !item.valid }"
+                        :aria-label="editingTransaction === item ? tt('Apply') : tt('Edit')"
                         :disabled="!!disabled"
                         :icon="editingTransaction === item ? mdiCheck : mdiPencilOutline"
                         @click="editTransaction(item)">
                 </v-icon>
-                <v-tooltip activator="parent" v-if="!disabled">{{ tt('Edit') }}</v-tooltip>
+                <v-tooltip activator="parent" v-if="!disabled">{{ editingTransaction === item ? tt('Apply') : tt('Edit') }}</v-tooltip>
             </template>
             <template #item.time="{ item }">
                 <span>{{ getDisplayDateTime(item) }}</span>
@@ -358,7 +359,7 @@
                                   @cancel="showCustomAmountFilterDialog = false">
             <template #toolbar>
                 <v-btn class="mx-2" density="comfortable" variant="outlined"
-                       @click="showCustomAmountFilterDialog = false; filters.amount = currentAmountFilterType?.toTextualFilter(currentAmountFilterValue1, currentAmountFilterValue2) ?? null">{{ tt('OK') }}</v-btn>
+                       @click="showCustomAmountFilterDialog = false; filters.amount = currentAmountFilterType?.toTextualFilter(currentAmountFilterValue1, currentAmountFilterValue2) ?? null">{{ tt('Apply') }}</v-btn>
             </template>
 
             <template #content>
@@ -369,7 +370,7 @@
                     <amount-input :currency="defaultCurrency"
                                   v-model="currentAmountFilterValue1"/>
                     <div class="ms-2 me-2 d-flex flex-column justify-center" v-if="currentAmountFilterType && currentAmountFilterType.paramCount === 2">
-                        ~
+                        {{ tt('format.misc.rangeSeparator') }}
                     </div>
                     <amount-input :currency="defaultCurrency"
                                   v-model="currentAmountFilterValue2"
@@ -385,7 +386,7 @@
             <template #toolbar>
                 <v-btn class="mx-2" density="comfortable" variant="outlined"
                        :disabled="!currentDescriptionFilterValue"
-                       @click="showCustomDescriptionDialog = false; filters.description = currentDescriptionFilterValue">{{ tt('OK') }}</v-btn>
+                       @click="showCustomDescriptionDialog = false; filters.description = currentDescriptionFilterValue">{{ tt('Apply') }}</v-btn>
             </template>
 
             <template #content>
@@ -532,6 +533,7 @@ const props = defineProps<{
 
 const {
     tt,
+    formatRange,
     formatDateTimeToLongDateTime,
     formatDateTimeToGregorianDefaultDateTime,
     formatAmountToWesternArabicNumeralsWithoutDigitGrouping,
@@ -1218,7 +1220,7 @@ const displayFilterCustomDateRange = computed<string>(() => {
     const minDisplayTime = formatDateTimeToLongDateTime(parseDateTimeFromUnixTime(filters.value.minDatetime));
     const maxDisplayTime = formatDateTimeToLongDateTime(parseDateTimeFromUnixTime(filters.value.maxDatetime));
 
-    return `${minDisplayTime} - ${maxDisplayTime}`
+    return formatRange(minDisplayTime, maxDisplayTime);
 });
 
 function isTransactionDisplayed(transaction: ImportTransaction): boolean {

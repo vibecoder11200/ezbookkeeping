@@ -1,23 +1,37 @@
 <template>
-    <monthly-income-and-expense-chart class="h-100" :data="monthlyIncomeAndExpenseData" :is-dark-mode="isDarkMode"
-                                      :loading="loading" :disabled="loading" :enable-click-item="true"
-                                      @click="clickMonthlyIncomeOrExpense" />
+    <v-card class="overview-widget d-flex flex-column" :class="{ 'disabled': loading }">
+        <template #title>
+            <overview-widget-header :title="displayTitle" :icon="mdiChartBar" />
+        </template>
+
+        <monthly-income-and-expense-chart :data="monthlyIncomeAndExpenseData" :is-dark-mode="isDarkMode"
+                                          :loading="loading" :disabled="loading" :enable-click-item="true"
+                                          :chart-type="chartType"
+                                          :transaction-types="transactionTypes"
+                                          :smooth-curve="smoothCurve"
+                                          :hide-x-axis-labels="!showXAxisLabels" :hide-legend="!showLegend"
+                                          :no-margin="!showLegend && !showXAxisLabels"
+                                          @click="clickMonthlyIncomeOrExpense" />
+    </v-card>
 </template>
 
 <script setup lang="ts">
+import OverviewWidgetHeader from './OverviewWidgetHeader.vue';
 import { type MonthlyIncomeAndExpenseCardClickEvent } from '@/components/desktop/MonthlyIncomeAndExpenseChart.vue';
 
 import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useTheme } from 'vuetify';
 
-import { useHomePageBase } from '@/views/base/HomePageBase.ts';
+import { useI18n } from '@/locales/helpers.ts';
 
 import { useOverviewStore } from '@/stores/overview.ts';
 
 import { DateRange } from '@/core/datetime.ts';
 import { ThemeType } from '@/core/theme.ts';
+import { TransactionType } from '@/core/transaction.ts';
 import {
+    type TransactionOverviewData,
     type TransactionMonthlyIncomeAndExpenseData,
     LATEST_12MONTHS_TRANSACTION_AMOUNTS_REQUEST_TYPES
 } from '@/models/transaction.ts';
@@ -25,21 +39,47 @@ import {
 import { BIG_DECIMAL_ZERO } from '@/lib/numeral.ts';
 import { getUnixTimeAfterUnixTime, getUnixTimeBeforeUnixTime } from '@/lib/datetime.ts';
 
+import {
+    mdiChartBar
+} from '@mdi/js';
+
 const props = defineProps<{
     loading: boolean;
-    months: number
+    title?: string;
+    chartType: number;
+    transactionTypes: number[];
+    months: number;
+    smoothCurve: boolean;
+    showXAxisLabels: boolean;
+    showLegend: boolean;
 }>();
 
 const router = useRouter();
 const theme = useTheme();
 
-const {
-    transactionOverview
-} = useHomePageBase();
+const { tt } = useI18n();
 
 const overviewStore = useOverviewStore();
 
 const isDarkMode = computed<boolean>(() => theme.global.name.value === ThemeType.Dark);
+const transactionOverview = computed<TransactionOverviewData>(() => overviewStore.transactionOverview);
+
+const displayTitle = computed<string>(() => {
+    if (props.title) {
+        return props.title;
+    }
+
+    const showIncome = props.transactionTypes.includes(TransactionType.Income);
+    const showExpense = props.transactionTypes.includes(TransactionType.Expense);
+
+    if (showIncome && !showExpense) {
+        return tt('Income Trends');
+    } else if (!showIncome && showExpense) {
+        return tt('Expense Trends');
+    } else {
+        return tt('Income and Expense Trends');
+    }
+});
 
 const monthlyIncomeAndExpenseData = computed<TransactionMonthlyIncomeAndExpenseData[]>(() => {
     const data: TransactionMonthlyIncomeAndExpenseData[] = [];
