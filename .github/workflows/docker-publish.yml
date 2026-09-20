@@ -58,6 +58,11 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          # [PLUGIN:ci] skip exchange-rate tests that hit real central bank APIs;
+          # they are network-dependent and flaky from CI runners (e.g. NorgesBank,
+          # NationalBankOfRomania). build.sh supports this via SKIP_TESTS.
+          build-args: |
+            SKIP_TESTS=TestExchangeRatesApiLatestExchangeRateHandler
 
       - name: Print image tags
         run: echo "Published ${{ steps.meta.outputs.tags }}"
