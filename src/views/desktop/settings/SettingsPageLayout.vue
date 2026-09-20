@@ -138,8 +138,6 @@ import { isUserCustomIconEnabled, isUserScheduledTransactionEnabled, isUserBudge
 
 import {
     mdiAccountOutline,
-    mdiViewDashboardOutline,
-    mdiTagOutline,
     mdiWalletOutline, // [PLUGIN:budget]
     mdiAutoFix, // [PLUGIN:rules]
     mdiShieldAccountOutline,
