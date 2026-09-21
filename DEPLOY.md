@@ -72,10 +72,10 @@ Chạy:
 
 ```bash
 docker compose up -d
-docker compose logs -f    # Ctrl+C để thoát, thấy "http server is listening" là ổn
+docker compose logs -f    # Ctrl+C để thoát, thấy "will run at http://" là ổn
 ```
 
-Kiểm tra locally: `curl -s http://127.0.0.1:12080/api/server_info.json` (kết quả JSON
+Kiểm tra locally: `curl -s http://127.0.0.1:12080/healthz.json` (kết quả JSON
 là được; nếu 404 vẫn ổn miễn có phản hồi).
 
 ## Bước 3 — Nối cloudflared (3 trường hợp)

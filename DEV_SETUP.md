@@ -14,7 +14,6 @@ On Windows you need an MSYS2 GCC on PATH **for the spawned cgo child process**.
    export CGO_ENABLED=1
    export CC=gcc
    ```
-   (Or source this file: `source DEV_SETUP.md`)
 
 ## Build commands
 ```bash
@@ -24,12 +23,12 @@ go test ./...
 
 # Frontend (Vue)
 npm install
-npm run dev      # dev server with HMR
+npm run serve    # dev server with HMR
 npm run build    # production build
 ```
 
 ## Run
 ```bash
-cp conf/ezbookkeeping.ini.example conf/ezbookkeeping.ini  # edit DB path if needed
-./ezbookkeeping.exe serve
+# conf/ezbookkeeping.ini is tracked with working defaults; edit only if needed
+./ezbookkeeping.exe server run
 ```
