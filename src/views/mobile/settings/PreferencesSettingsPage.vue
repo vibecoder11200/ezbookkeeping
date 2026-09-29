@@ -125,6 +125,21 @@
                     <div v-else-if="!loadingTransactionCategories">{{ transactionCategoriesIncludedInHomePageOverviewDisplayContent }}</div>
                 </template>
             </f7-list-item>
+
+            <f7-list-item
+                class="item-truncate-after-text"
+                link="/settings/filter/tag?type=homePageOverview"
+                :disabled="!hasAnyTransactionTag">
+                <template #after-title>
+                    <div class="item-actual-title">
+                        <span>{{ tt('Transaction Tags Included in Overview Statistics') }}</span>
+                    </div>
+                </template>
+                <template #after>
+                    <f7-preloader v-if="loadingTags" />
+                    <div v-else-if="!loadingTags">{{ tt(settingsStore.appSettings.overviewTransactionTagFilterInHomePage ? 'Custom' : 'All') }}</div>
+                </template>
+            </f7-list-item>
         </f7-list>
 
         <f7-block-title>{{ tt('Transaction List Page') }}</f7-block-title>
@@ -136,6 +151,35 @@
                 <template #after>
                     <f7-toggle :checked="showTotalAmountInTransactionListPage" @toggle:change="showTotalAmountInTransactionListPage = $event"></f7-toggle>
                 </template>
+            </f7-list-item>
+            <f7-list-item
+                link="#"
+                class="item-truncate-after-text"
+                popover-open=".monthly-total-amount-type-popover-menu"
+            >
+                <template #after-title>
+                    {{ tt('Total Amount Calculation Method') }}
+                </template>
+                <template #after>
+                    {{ totalAmountTypeInTransactionListPage === TransactionAmountType.IncomeAndExpense ? tt('Income and Expense') : tt('Inflows and Outflows') }}
+                </template>
+                <f7-popover class="monthly-total-amount-type-popover-menu">
+                    <f7-list dividers>
+                        <f7-list-item link="#" no-chevron popover-close
+                                      :title="option.name"
+                                      :class="{ 'list-item-selected': totalAmountTypeInTransactionListPage === option.value }"
+                                      :key="option.value"
+                                      v-for="option in [
+                                          { name: tt('Inflows and Outflows'), value: TransactionAmountType.InflowsAndOutflows },
+                                          { name: tt('Income and Expense'), value: TransactionAmountType.IncomeAndExpense }
+                                      ]"
+                                      @click="totalAmountTypeInTransactionListPage = option.value">
+                            <template #after>
+                                <f7-icon class="list-item-checked-icon" f7="checkmark_alt" v-if="totalAmountTypeInTransactionListPage === option.value"></f7-icon>
+                            </template>
+                        </f7-list-item>
+                    </f7-list>
+                </f7-popover>
             </f7-list-item>
             <f7-list-item>
                 <template #after-title>
@@ -449,10 +493,11 @@ import { useAppSettingPageBase } from '@/views/base/settings/AppSettingsPageBase
 import { useSettingsStore } from '@/stores/setting.ts';
 import { useAccountsStore } from '@/stores/account.ts';
 import { useTransactionCategoriesStore } from '@/stores/transactionCategory.ts';
+import { useTransactionTagsStore } from '@/stores/transactionTag.ts';
 
 import type { TypeAndDisplayName } from '@/core/base.ts';
 import { CategoryType } from '@/core/category.ts';
-import { TransactionQuickSaveButtonStyle } from '@/core/transaction.ts';
+import { TransactionAmountType, TransactionQuickSaveButtonStyle } from '@/core/transaction.ts';
 import { DEFAULT_RECONCILIATION_STATEMENT_DATE_RANGE_IN_MOBILE } from '@/core/statistics.ts';
 
 import { findNameByValue, findDisplayNameByType } from '@/lib/common.ts';
@@ -468,9 +513,11 @@ const { showToast } = useI18nUIComponents();
 const {
     loadingAccounts,
     loadingTransactionCategories,
+    loadingTags,
     hasAnyAccount,
     hasAnyVisibleAccount,
     hasAnyTransactionCategory,
+    hasAnyTransactionTag,
     allTimezoneTypesUsedForStatistics,
     allCurrencySortingTypes,
     allKeywordMatchModes,
@@ -482,6 +529,7 @@ const {
     showAmountInHomePage,
     timezoneUsedForStatisticsInHomePage,
     showTotalAmountInTransactionListPage,
+    totalAmountTypeInTransactionListPage,
     showTagInTransactionListPage,
     defaultKeywordMatchModeInTransactionListPage,
     autoSaveTransactionDraft,
@@ -501,6 +549,7 @@ const {
 const settingsStore = useSettingsStore();
 const accountsStore = useAccountsStore();
 const transactionCategoriesStore = useTransactionCategoriesStore();
+const transactionTagsStore = useTransactionTagsStore();
 
 const showTimezoneUsedForStatisticsInHomePagePopup = ref<boolean>(false);
 const showTransactionPictureQualityPopup = ref<boolean>(false);
@@ -546,6 +595,7 @@ const reconciliationStatementPageDefaultDateRangeTypeInMobile = computed<number>
 function init(): void {
     loadingAccounts.value = true;
     loadingTransactionCategories.value = true;
+    loadingTags.value = true;
 
     accountsStore.loadAllAccounts({
         force: false
@@ -565,6 +615,18 @@ function init(): void {
         loadingTransactionCategories.value = false;
     }).catch(error => {
         loadingTransactionCategories.value = false;
+
+        if (!error.processed) {
+            showToast(error.message || error);
+        }
+    });
+
+    transactionTagsStore.loadAllTags({
+        force: false
+    }).then(() => {
+        loadingTags.value = false;
+    }).catch(error => {
+        loadingTags.value = false;
 
         if (!error.processed) {
             showToast(error.message || error);

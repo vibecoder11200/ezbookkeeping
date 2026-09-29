@@ -1,7 +1,8 @@
 import type { PartialRecord } from '@/core/base.ts';
 import { DateRange } from '@/core/datetime.ts';
-import { TransactionType } from '@/core/transaction.ts';
+import { TransactionType, TransactionAmountType } from '@/core/transaction.ts';
 import { TrendChartType } from '@/core/statistics.ts';
+import { TransactionCalendarHeatmapOutlierColorMode } from '@/core/chart.ts';
 import {
     type OverviewWidgetSettingValue,
     type OverviewWidgetSwitchSettingItem,
@@ -421,7 +422,7 @@ export const DESKTOP_OVERVIEW_WIDGET_DEFINITIONS: PartialRecord<OverviewWidgetTy
                 displayName: 'Tags'
             },
             {
-                settingType: 'amount',
+                settingType: 'amountFilter',
                 settingName: 'amountFilter',
                 displayName: 'Amount'
             },
@@ -455,8 +456,40 @@ export const DESKTOP_OVERVIEW_WIDGET_DEFINITIONS: PartialRecord<OverviewWidgetTy
             WIDGET_TITLE_SETTING,
             {
                 settingType: 'customSelect',
+                settingName: 'totalAmountType',
+                displayName: 'Total Amount Calculation Method',
+                selectValues: [
+                    { name: 'Inflows and Outflows', value: TransactionAmountType.InflowsAndOutflows },
+                    { name: 'Income and Expense', value: TransactionAmountType.IncomeAndExpense }
+                ]
+            },
+            {
+                settingType: 'customSelect',
                 settingName: 'transactionTypes',
                 displayName: 'Transaction Type',
+                condition: (settings?: Record<string, OverviewWidgetSettingValue>) => {
+                    return settings?.['totalAmountType'] === TransactionAmountType.InflowsAndOutflows;
+                },
+                selectValues: [
+                    {
+                        name: 'Inflow',
+                        value: TransactionType.Income
+                    },
+                    {
+                        name: 'Outflow',
+                        value: TransactionType.Expense
+                    }
+                ],
+                multiple: true,
+                minSelections: 1
+            },
+            {
+                settingType: 'customSelect',
+                settingName: 'transactionTypes',
+                displayName: 'Transaction Type',
+                condition: (settings?: Record<string, OverviewWidgetSettingValue>) => {
+                    return settings?.['totalAmountType'] === TransactionAmountType.IncomeAndExpense;
+                },
                 selectValues: [
                     {
                         name: 'Income',
@@ -482,6 +515,7 @@ export const DESKTOP_OVERVIEW_WIDGET_DEFINITIONS: PartialRecord<OverviewWidgetTy
             }
         ],
         defaultSettings: {
+            totalAmountType: TransactionAmountType.InflowsAndOutflows,
             transactionTypes: [
                 TransactionType.Income,
                 TransactionType.Expense
@@ -522,11 +556,50 @@ export const DESKTOP_OVERVIEW_WIDGET_DEFINITIONS: PartialRecord<OverviewWidgetTy
                 settingName: 'months',
                 displayName: 'Date Range',
                 monthValues: [6, 12]
+            },
+            {
+                settingType: 'customSelect',
+                settingName: 'outlierColorMode',
+                displayName: 'Color Outliers Separately',
+                selectValues: [
+                    {
+                        name: 'Disabled',
+                        value: TransactionCalendarHeatmapOutlierColorMode.Disabled
+                    },
+                    {
+                        name: 'Days with Highest Amounts',
+                        value: TransactionCalendarHeatmapOutlierColorMode.TopCount
+                    },
+                    {
+                        name: 'Amount Threshold',
+                        value: TransactionCalendarHeatmapOutlierColorMode.AboveAmount
+                    }
+                ]
+            },
+            {
+                settingType: 'itemCountSelect',
+                settingName: 'outlierTopCount',
+                displayName: 'Outlier Day Count',
+                itemCountValues: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+                condition: (settings?: Record<string, OverviewWidgetSettingValue>) => {
+                    return settings?.['outlierColorMode'] === TransactionCalendarHeatmapOutlierColorMode.TopCount;
+                }
+            },
+            {
+                settingType: 'amount',
+                settingName: 'outlierAmountThreshold',
+                displayName: 'Outlier Amount Threshold',
+                condition: (settings?: Record<string, OverviewWidgetSettingValue>) => {
+                    return settings?.['outlierColorMode'] === TransactionCalendarHeatmapOutlierColorMode.AboveAmount;
+                }
             }
         ],
         defaultSettings: {
             transactionType: TransactionType.Expense,
-            months: 12
+            months: 12,
+            outlierColorMode: TransactionCalendarHeatmapOutlierColorMode.Disabled,
+            outlierTopCount: 1,
+            outlierAmountThreshold: 0
         },
         defaultWidth: 6,
         defaultHeight: 3,
@@ -578,6 +651,7 @@ export const DEFAULT_DESKTOP_OVERVIEW_LAYOUT: DesktopOverviewLayout = {
             w: 4,
             h: 6,
             settings: {
+                totalAmountType: TransactionAmountType.InflowsAndOutflows,
                 transactionTypes: [
                     TransactionType.Income,
                     TransactionType.Expense
@@ -923,7 +997,7 @@ export const MOBILE_OVERVIEW_WIDGET_DEFINITIONS: PartialRecord<OverviewWidgetTyp
                 displayName: 'Tags'
             },
             {
-                settingType: 'amount',
+                settingType: 'amountFilter',
                 settingName: 'amountFilter',
                 displayName: 'Amount'
             },
@@ -953,8 +1027,40 @@ export const MOBILE_OVERVIEW_WIDGET_DEFINITIONS: PartialRecord<OverviewWidgetTyp
         supportsSettings: [
             {
                 settingType: 'customSelect',
+                settingName: 'totalAmountType',
+                displayName: 'Total Amount Calculation Method',
+                selectValues: [
+                    { name: 'Inflows and Outflows', value: TransactionAmountType.InflowsAndOutflows },
+                    { name: 'Income and Expense', value: TransactionAmountType.IncomeAndExpense }
+                ]
+            },
+            {
+                settingType: 'customSelect',
                 settingName: 'transactionTypes',
                 displayName: 'Transaction Type',
+                condition: (settings?: Record<string, OverviewWidgetSettingValue>) => {
+                    return settings?.['totalAmountType'] === TransactionAmountType.InflowsAndOutflows;
+                },
+                selectValues: [
+                    {
+                        name: 'Inflow',
+                        value: TransactionType.Income
+                    },
+                    {
+                        name: 'Outflow',
+                        value: TransactionType.Expense
+                    }
+                ],
+                multiple: true,
+                minSelections: 1
+            },
+            {
+                settingType: 'customSelect',
+                settingName: 'transactionTypes',
+                displayName: 'Transaction Type',
+                condition: (settings?: Record<string, OverviewWidgetSettingValue>) => {
+                    return settings?.['totalAmountType'] === TransactionAmountType.IncomeAndExpense;
+                },
                 selectValues: [
                     {
                         name: 'Income',
@@ -980,6 +1086,7 @@ export const MOBILE_OVERVIEW_WIDGET_DEFINITIONS: PartialRecord<OverviewWidgetTyp
             }
         ],
         defaultSettings: {
+            totalAmountType: TransactionAmountType.InflowsAndOutflows,
             transactionTypes: [
                 TransactionType.Income,
                 TransactionType.Expense
