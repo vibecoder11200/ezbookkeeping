@@ -75,6 +75,7 @@ import type {
     TransactionDeleteRequest,
     TransactionBatchDeleteRequest,
     TransactionImportRequest,
+    TransactionImportResponse,
     TransactionListByMaxTimeRequest,
     TransactionListInMonthByPageRequest,
     TransactionAllListRequest,
@@ -83,6 +84,8 @@ import type {
     TransactionInfoPageWrapperResponse2,
     TransactionReconciliationStatementRequest,
     TransactionReconciliationStatementResponse,
+    TransactionUnreconciledCountRequest,
+    TransactionUnreconciledCountResponse,
     TransactionStatisticRequest,
     TransactionStatisticResponse,
     TransactionStatisticTrendsRequest,
@@ -293,7 +296,7 @@ axios.interceptors.response.use(response => {
 
     return response;
 }, error => {
-    if ('cancelableUuid' in error.response.config && error.response.config.cancelableUuid && cancelableRequests[error.response.config.cancelableUuid]) {
+    if (error.response && 'cancelableUuid' in error.response.config && error.response.config.cancelableUuid && cancelableRequests[error.response.config.cancelableUuid]) {
         logger.debug('Response canceled by user request, url: ' + error.response.config.url + ', cancelableUuid: ' + error.response.config.cancelableUuid);
         delete cancelableRequests[error.response.config.cancelableUuid];
         return Promise.reject({ canceled: true });
@@ -565,6 +568,9 @@ export default {
     getReconciliationStatements: (req: TransactionReconciliationStatementRequest): ApiResponsePromise<TransactionReconciliationStatementResponse> => {
         return axios.get<ApiResponse<TransactionReconciliationStatementResponse>>(`v1/transactions/reconciliation_statements.json?account_id=${req.accountId}&start_time=${req.startTime}&end_time=${req.endTime}`);
     },
+    getUnreconciledTransactionCounts: (req: TransactionUnreconciledCountRequest): ApiResponsePromise<TransactionUnreconciledCountResponse> => {
+        return axios.get<ApiResponse<TransactionUnreconciledCountResponse>>(`v1/transactions/unreconciled_transaction_counts.json?account_ids=${req.accountIds.join(',')}`);
+    },
     getTransactionStatistics: (req: TransactionStatisticRequest): ApiResponsePromise<TransactionStatisticResponse> => {
         const queryParams: string[] = [];
 
@@ -774,13 +780,13 @@ export default {
             cancelableUuid: cancelableUuid
         } as ApiRequestConfig);
     },
-    importTransactions: (req: TransactionImportRequest): ApiResponsePromise<number> => {
-        return axios.post<ApiResponse<number>>('v1/transactions/import.json', req, {
+    importTransactions: (req: TransactionImportRequest): ApiResponsePromise<TransactionImportResponse> => {
+        return axios.post<ApiResponse<TransactionImportResponse>>('v1/transactions/import.json', req, {
             timeout: DEFAULT_IMPORT_API_TIMEOUT
         } as ApiRequestConfig);
     },
-    getImportTransactionsProcess: (clientSessionId: string): ApiResponsePromise<number | null> => {
-        return axios.get<ApiResponse<number | null>>('v1/transactions/import/process.json?client_session_id=' + clientSessionId, {
+    getImportTransactionsProcess: (clientSessionId: string): ApiResponsePromise<TransactionImportResponse | null> => {
+        return axios.get<ApiResponse<TransactionImportResponse | null>>('v1/transactions/import/process.json?client_session_id=' + clientSessionId, {
             ignoreError: true
         } as ApiRequestConfig);
     },

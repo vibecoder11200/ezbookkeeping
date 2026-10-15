@@ -203,6 +203,13 @@ type TransactionImportRequest struct {
 	ClientSessionId string                      `json:"clientSessionId"`
 }
 
+// TransactionImportResponse represents the result and committed progress of transaction import
+type TransactionImportResponse struct {
+	Finished      bool `json:"finished"`
+	ImportedCount int  `json:"importedCount"`
+	TotalCount    int  `json:"totalCount"`
+}
+
 // TransactionImportProcessRequest represents all parameters of transaction import process request
 type TransactionImportProcessRequest struct {
 	ClientSessionId string `form:"client_session_id"`
@@ -466,6 +473,22 @@ type TransactionReconciliationStatementResponse struct {
 	TotalOutflows  string                                            `json:"totalOutflows"`
 	OpeningBalance string                                            `json:"openingBalance"`
 	ClosingBalance string                                            `json:"closingBalance"`
+}
+
+// TransactionUnreconciledCountRequest represents the request for unreconciled transaction counts
+type TransactionUnreconciledCountRequest struct {
+	AccountIds string `form:"account_ids"`
+}
+
+// TransactionUnreconciledCountItem represents the unreconciled transaction count of an account
+type TransactionUnreconciledCountItem struct {
+	AccountId int64 `json:"accountId,string"`
+	Count     int64 `json:"count"`
+}
+
+// TransactionUnreconciledCountResponse represents the response of unreconciled transaction counts
+type TransactionUnreconciledCountResponse struct {
+	Items []*TransactionUnreconciledCountItem `json:"items"`
 }
 
 // TransactionStatisticResponse represents transaction statistic response

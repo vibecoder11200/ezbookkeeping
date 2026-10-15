@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/json/v2"
-	"fmt"
 	"io"
 	"math"
 	"math/big"
@@ -28,6 +27,7 @@ import (
 
 const pageCountForAccountStatement = 1000
 const pageCountForMovingAccountTransactions = 1000
+const transactionImportResultExpiration = 1 * time.Hour
 
 // TransactionsApi represents transaction api
 type TransactionsApi struct {
@@ -532,6 +532,82 @@ func (a *TransactionsApi) TransactionReconciliationStatementHandler(c *core.WebC
 	}
 
 	return reconciliationStatementResp, nil
+}
+
+// TransactionUnreconciledTransactionCountsHandler returns unreconciled transaction counts of current user's accounts
+func (a *TransactionsApi) TransactionUnreconciledTransactionCountsHandler(c *core.WebContext) (any, *errs.Error) {
+	var unreconciledCountReq models.TransactionUnreconciledCountRequest
+	err := c.ShouldBindQuery(&unreconciledCountReq)
+
+	if err != nil {
+		log.Warnf(c, "[transactions.TransactionUnreconciledTransactionCountsHandler] parse request failed, because %s", err.Error())
+		return nil, errs.NewIncompleteOrIncorrectSubmissionError(err)
+	}
+
+	selectedAccountIds := make(map[int64]bool)
+
+	if unreconciledCountReq.AccountIds != "" {
+		accountIds, err := utils.StringArrayToInt64Array(strings.Split(unreconciledCountReq.AccountIds, ","))
+
+		if err != nil {
+			return nil, errs.ErrAccountIdInvalid
+		}
+
+		for _, accountId := range accountIds {
+			selectedAccountIds[accountId] = true
+		}
+	}
+
+	uid := c.GetCurrentUid()
+	user, err := a.users.GetUserById(c, uid)
+
+	if err != nil {
+		if !errs.IsCustomError(err) {
+			log.Errorf(c, "[transactions.TransactionUnreconciledTransactionCountsHandler] failed to get user, because %s", err.Error())
+		}
+
+		return nil, errs.ErrUserNotFound
+	}
+
+	if !user.UseLastReconciledTime {
+		return nil, errs.ErrLastReconciledTimeIsNotEnabled
+	}
+
+	accounts, err := a.accounts.GetAllAccountsByUid(c, uid)
+
+	if err != nil {
+		log.Errorf(c, "[transactions.TransactionUnreconciledTransactionCountsHandler] failed to get all accounts for user \"uid:%d\", because %s", uid, err.Error())
+		return nil, errs.Or(err, errs.ErrOperationFailed)
+	}
+
+	accountLastReconciledTimes := make(map[int64]int64, len(accounts))
+
+	for _, account := range accounts {
+		if account.Hidden || account.Type == models.ACCOUNT_TYPE_MULTI_SUB_ACCOUNTS {
+			continue
+		}
+
+		if len(selectedAccountIds) > 0 && !selectedAccountIds[account.AccountId] {
+			continue
+		}
+
+		if account.Extend != nil && account.Extend.LastReconciledTime != nil && *account.Extend.LastReconciledTime > 0 {
+			accountLastReconciledTimes[account.AccountId] = *account.Extend.LastReconciledTime
+		} else {
+			accountLastReconciledTimes[account.AccountId] = 0
+		}
+	}
+
+	counts, err := a.transactions.GetUnreconciledTransactionCounts(c, uid, accountLastReconciledTimes)
+
+	if err != nil {
+		log.Errorf(c, "[transactions.TransactionUnreconciledTransactionCountsHandler] failed to get unreconciled transaction counts for user \"uid:%d\", because %s", uid, err.Error())
+		return nil, errs.Or(err, errs.ErrOperationFailed)
+	}
+
+	return &models.TransactionUnreconciledCountResponse{
+		Items: counts,
+	}, nil
 }
 
 // TransactionStatisticsHandler returns transaction statistics of current user
@@ -1108,7 +1184,7 @@ func (a *TransactionsApi) TransactionGetHandler(c *core.WebContext) (any, *errs.
 	var tagMap map[int64]*models.TransactionTag
 	var pictureInfos []*models.TransactionPictureInfo
 
-	if !transactionGetReq.TrimCategory {
+	if !transactionGetReq.TrimCategory && transaction.Type != models.TRANSACTION_DB_TYPE_MODIFY_BALANCE {
 		category, err = a.transactionCategories.GetCategoryByCategoryId(c, uid, transaction.CategoryId)
 
 		if err != nil {
@@ -2740,22 +2816,13 @@ func (a *TransactionsApi) TransactionImportHandler(c *core.WebContext) (any, *er
 		found, remark := a.GetSubmissionRemark(duplicatechecker.DUPLICATE_CHECKER_TYPE_IMPORT_TRANSACTIONS, uid, transactionImportReq.ClientSessionId)
 
 		if found {
-			items := strings.Split(remark, ":")
+			var result *models.TransactionImportResponse
 
-			if len(items) >= 2 {
-				if items[0] == "finished" {
-					log.Infof(c, "[transactions.TransactionImportHandler] another \"%s\" transactions has been imported for user \"uid:%d\"", items[1], uid)
-					count, err := utils.StringToInt(items[1])
-
-					if err == nil {
-						return count, nil
-					}
-				} else if items[0] == "processing" {
-					return nil, errs.ErrRepeatedRequest
-				}
-			} else {
-				log.Warnf(c, "[transactions.TransactionImportHandler] another transaction import task may be executing, but remark \"%s\" is invalid", remark)
+			if json.Unmarshal([]byte(remark), &result) == nil && result != nil && result.Finished {
+				return a.getTransactionImportResponse(result)
 			}
+
+			return nil, errs.ErrRepeatedRequest
 		}
 	}
 
@@ -2855,22 +2922,55 @@ func (a *TransactionsApi) TransactionImportHandler(c *core.WebContext) (any, *er
 		}
 	}
 
-	err = a.transactions.BatchCreateTransactions(c, user.Uid, newTransactions, newTransactionTagIdsMap, func(currentProcess float64) {
-		a.SetSubmissionRemarkIfEnable(duplicatechecker.DUPLICATE_CHECKER_TYPE_IMPORT_TRANSACTIONS, uid, transactionImportReq.ClientSessionId, fmt.Sprintf("processing:%.2f", currentProcess))
-	})
-	count := len(newTransactions)
-
-	if err != nil {
-		a.RemoveSubmissionRemarkIfEnable(duplicatechecker.DUPLICATE_CHECKER_TYPE_IMPORT_TRANSACTIONS, uid, transactionImportReq.ClientSessionId)
-		log.Errorf(c, "[transactions.TransactionImportHandler] failed to import %d transactions for user \"uid:%d\", because %s", count, uid, err.Error())
-		return nil, errs.Or(err, errs.ErrOperationFailed)
+	result := &models.TransactionImportResponse{
+		TotalCount: len(newTransactions),
 	}
 
-	log.Infof(c, "[transactions.TransactionImportHandler] user \"uid:%d\" has imported %d transactions successfully", uid, count)
+	if a.CurrentConfig().EnableDuplicateSubmissionsCheck && transactionImportReq.ClientSessionId != "" {
+		initialRemark, err := json.Marshal(result)
 
-	a.SetSubmissionRemarkIfEnable(duplicatechecker.DUPLICATE_CHECKER_TYPE_IMPORT_TRANSACTIONS, uid, transactionImportReq.ClientSessionId, fmt.Sprintf("finished:%d", count))
+		if err != nil {
+			log.Warnf(c, "[transactions.TransactionImportHandler] failed to marshal initial import result for user \"uid:%d\", because %s", uid, err.Error())
+			return nil, errs.ErrOperationFailed
+		}
 
-	return count, nil
+		found, remark := a.GetOrSetSubmissionRemarkWithCustomExpiration(duplicatechecker.DUPLICATE_CHECKER_TYPE_IMPORT_TRANSACTIONS, uid, transactionImportReq.ClientSessionId, string(initialRemark), transactionImportResultExpiration)
+
+		if found {
+			var previousResult *models.TransactionImportResponse
+
+			if json.Unmarshal([]byte(remark), &previousResult) == nil && previousResult != nil && previousResult.Finished {
+				return a.getTransactionImportResponse(previousResult)
+			}
+
+			return nil, errs.ErrRepeatedRequest
+		}
+	}
+
+	for i := 0; i < len(newTransactions); i++ {
+		err = a.transactions.CreateTransaction(c, newTransactions[i], newTransactionTagIdsMap[i], nil)
+
+		if err != nil {
+			result.Finished = true
+			a.setTransactionImportResult(uid, transactionImportReq.ClientSessionId, result)
+			log.Errorf(c, "[transactions.TransactionImportHandler] failed to import transactions for user \"uid:%d\" after %d of %d transactions, because %s", uid, result.ImportedCount, result.TotalCount, err.Error())
+
+			return nil, errs.NewErrorWithContext(errs.Or(err, errs.ErrOperationFailed), map[string]any{
+				"importedCount": result.ImportedCount,
+				"totalCount":    result.TotalCount,
+			})
+		}
+
+		result.ImportedCount = i + 1
+		a.setTransactionImportResult(uid, transactionImportReq.ClientSessionId, result)
+	}
+
+	result.Finished = true
+	a.setTransactionImportResult(uid, transactionImportReq.ClientSessionId, result)
+
+	log.Infof(c, "[transactions.TransactionImportHandler] user \"uid:%d\" has imported %d of %d transactions", uid, result.ImportedCount, result.TotalCount)
+
+	return result, nil
 }
 
 // TransactionImportProcessHandler returns the process of specified transaction import task by request parameters for current user
@@ -2895,32 +2995,19 @@ func (a *TransactionsApi) TransactionImportProcessHandler(c *core.WebContext) (a
 		return nil, nil
 	}
 
-	items := strings.Split(remark, ":")
-
-	if len(items) < 2 {
-		return nil, nil
-	}
-
-	if items[0] == "finished" {
-		return 100, nil
-	} else if items[0] != "processing" {
-		return nil, nil
-	}
-
-	process, err := utils.StringToFloat64(items[1])
+	var result *models.TransactionImportResponse
+	err = json.Unmarshal([]byte(remark), &result)
 
 	if err != nil {
 		log.Warnf(c, "[transactions.TransactionImportProcessHandler] parse process failed, because %s", err.Error())
 		return nil, nil
 	}
 
-	if process < 0 {
+	if result == nil {
 		return nil, nil
-	} else if process >= 100 {
-		process = 100
 	}
 
-	return process, nil
+	return a.getTransactionImportResponse(result)
 }
 
 func (a *TransactionsApi) filterTransactions(c *core.WebContext, uid int64, transactions []*models.Transaction, accountMap map[int64]*models.Account) []*models.Transaction {
@@ -3165,6 +3252,29 @@ func (a *TransactionsApi) getTransactionResponseListResult(c *core.WebContext, u
 	sort.Sort(result)
 
 	return result, nil
+}
+
+func (a *TransactionsApi) getTransactionImportResponse(result *models.TransactionImportResponse) (any, *errs.Error) {
+	if !result.Finished || result.ImportedCount == result.TotalCount {
+		return result, nil
+	}
+
+	return nil, errs.NewErrorWithContext(errs.ErrOperationFailed, map[string]any{
+		"importedCount": result.ImportedCount,
+		"totalCount":    result.TotalCount,
+	})
+}
+
+func (a *TransactionsApi) setTransactionImportResult(uid int64, clientSessionId string, result *models.TransactionImportResponse) {
+	if !a.CurrentConfig().EnableDuplicateSubmissionsCheck || clientSessionId == "" {
+		return
+	}
+
+	remark, err := json.Marshal(result)
+
+	if err == nil {
+		a.SetSubmissionRemarkWithCustomExpiration(duplicatechecker.DUPLICATE_CHECKER_TYPE_IMPORT_TRANSACTIONS, uid, clientSessionId, string(remark), transactionImportResultExpiration)
+	}
 }
 
 func (a *TransactionsApi) createNewTransactionModel(uid int64, transactionCreateReq *models.TransactionCreateRequest, clientIp string) *models.Transaction {

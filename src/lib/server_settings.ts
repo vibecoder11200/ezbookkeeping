@@ -159,3 +159,7 @@ export function getAmapApplicationSecret(): string {
 export function getExchangeRatesRequestTimeout(): number {
     return getServerSetting('errt') as number;
 }
+
+export function isLanguagePreviewEnabled(): boolean {
+    return getServerSetting('dlp') === 1;
+}

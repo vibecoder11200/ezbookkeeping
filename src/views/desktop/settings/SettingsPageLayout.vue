@@ -120,6 +120,12 @@
                     <span class="nav-item-title">{{ tt('Browser Cache Management') }}</span>
                 </router-link>
             </li>
+            <li class="nav-link" v-if="isLanguagePreviewEnabled()">
+                <router-link to="/settings/developer_tools">
+                    <v-icon class="nav-item-icon" :icon="mdiCodeBraces"/>
+                    <span class="nav-item-title">{{ tt('Developer Tools') }}</span>
+                </router-link>
+            </li>
         </template>
 
         <template #content>
@@ -134,7 +140,13 @@ import { useRoute } from 'vue-router';
 
 import { useI18n } from '@/locales/helpers.ts';
 
-import { isUserCustomIconEnabled, isUserScheduledTransactionEnabled, isUserBudgetingEnabled, isRulesEngineEnabled } from '@/lib/server_settings.ts'; // [PLUGIN:budget] [PLUGIN:rules] for budgeting & rules engine
+import {
+    isUserCustomIconEnabled,
+    isUserScheduledTransactionEnabled,
+    isUserBudgetingEnabled, // [PLUGIN:budget]
+    isRulesEngineEnabled, // [PLUGIN:rules]
+    isLanguagePreviewEnabled
+} from '@/lib/server_settings.ts';
 
 import {
     mdiAccountOutline,
@@ -153,7 +165,8 @@ import {
     mdiChartPieOutline,
     mdiCloudOutline,
     mdiSwapHorizontal,
-    mdiDatabaseClockOutline
+    mdiDatabaseClockOutline,
+    mdiCodeBraces
 } from '@mdi/js';
 
 const route = useRoute();
