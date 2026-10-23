@@ -1,0 +1,10 @@
+# Keep the docker build context equivalent to a clean git checkout.
+# CI builds from a fresh checkout and thus never sees these local-only paths.
+# NOTE: .git must be INCLUDED - the frontend build embeds the commit hash via git-rev-sync.
+_reference
+node_modules
+dist
+data
+storage
+log
+*.tar.gz
