@@ -73,6 +73,12 @@
                 </router-link>
             </li>
             <li class="nav-link">
+                <router-link to="/presets/import/list">
+                    <v-icon class="nav-item-icon" :icon="mdiFileTableBoxOutline"/>
+                    <span class="nav-item-title">{{ tt('Import Presets') }}</span>
+                </router-link>
+            </li>
+            <li class="nav-link">
                 <router-link to="/settings/user/data_management">
                     <v-icon class="nav-item-icon" :icon="mdiDatabaseCogOutline"/>
                     <span class="nav-item-title">{{ tt('Data Management') }}</span>
@@ -159,6 +165,7 @@ import {
     mdiClipboardTextOutline,
     mdiClipboardTextClockOutline,
     mdiShapePlusOutline,
+    mdiFileTableBoxOutline,
     mdiDatabaseCogOutline,
     mdiCogOutline,
     mdiLockOpenOutline,

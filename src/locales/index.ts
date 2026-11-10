@@ -3,6 +3,7 @@ import el from './el.json';
 import en from './en.json';
 import es from './es.json';
 import fr from './fr.json';
+import hi from './hi.json';
 import it from './it.json';
 import ja from './ja.json';
 import kn from './kn.json';
@@ -12,6 +13,7 @@ import pl from './pl.json';
 import ptBR from './pt_BR.json';
 import ro from './ro.json';
 import ru from './ru.json';
+import sk from './sk.json';
 import sl from './sl.json';
 import ta from './ta.json';
 import th from './th.json';
@@ -75,6 +77,13 @@ export const ALL_LANGUAGES: Record<string, LanguageInfo> = {
         textDirection: "ltr",
         content: fr,
     },
+    'hi': {
+        name: 'Hindi',
+        displayName: 'हिन्दी',
+        alternativeLanguageTag: 'hi-IN',
+        textDirection: 'ltr',
+        content: hi
+    },
     'it': {
         name: 'Italian',
         displayName: 'Italiano',
@@ -137,6 +146,13 @@ export const ALL_LANGUAGES: Record<string, LanguageInfo> = {
         alternativeLanguageTag: 'ru-RU',
         textDirection: 'ltr',
         content: ru
+    },
+    'sk': {
+        name: 'Slovak',
+        displayName: 'Slovenčina',
+        alternativeLanguageTag: 'sk-SK',
+        textDirection: 'ltr',
+        content: sk
     },
     'sl': {
         name: 'Slovenian',

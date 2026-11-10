@@ -4,8 +4,6 @@ import (
 	"math/big"
 	"time"
 
-	"xorm.io/xorm"
-
 	"github.com/mayswind/ezbookkeeping/pkg/core"
 	"github.com/mayswind/ezbookkeeping/pkg/datastore"
 	"github.com/mayswind/ezbookkeeping/pkg/errs"
@@ -100,7 +98,7 @@ func (s *CategoryBudgetLimitService) CreateBudgetLimit(c core.Context, budget *m
 	budget.CreatedUnixTime = time.Now().Unix()
 	budget.UpdatedUnixTime = time.Now().Unix()
 
-	return s.UserDataDB(budget.Uid).DoTransaction(c, func(sess *xorm.Session) error {
+	return s.UserDataDB(budget.Uid).DoTransaction(c, func(sess datastore.DatabaseSession) error {
 		_, err := sess.Insert(budget)
 		return err
 	})
@@ -119,7 +117,7 @@ func (s *CategoryBudgetLimitService) ModifyBudgetLimit(c core.Context, budget *m
 
 	budget.UpdatedUnixTime = time.Now().Unix()
 
-	return s.UserDataDB(budget.Uid).DoTransaction(c, func(sess *xorm.Session) error {
+	return s.UserDataDB(budget.Uid).DoTransaction(c, func(sess datastore.DatabaseSession) error {
 		updatedRows, err := sess.ID(budget.BudgetId).Cols("amount", "currency", "updated_unix_time").
 			Where("uid=? AND deleted=?", budget.Uid, false).Update(budget)
 
@@ -149,7 +147,7 @@ func (s *CategoryBudgetLimitService) DeleteBudgetLimit(c core.Context, uid int64
 		DeletedUnixTime: now,
 	}
 
-	return s.UserDataDB(uid).DoTransaction(c, func(sess *xorm.Session) error {
+	return s.UserDataDB(uid).DoTransaction(c, func(sess datastore.DatabaseSession) error {
 		updatedRows, err := sess.ID(budgetId).Cols("deleted", "deleted_unix_time").
 			Where("uid=? AND deleted=?", uid, false).Update(updateModel)
 

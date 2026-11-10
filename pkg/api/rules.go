@@ -29,7 +29,7 @@ var (
 			ApiUsingConfig: ApiUsingConfig{
 				container: settings.Container,
 			},
-			container: duplicatechecker.Container,
+			duplicateChecker: duplicatechecker.Container,
 		},
 		ruleGroups: services.RuleGroups,
 		rules:      services.Rules,

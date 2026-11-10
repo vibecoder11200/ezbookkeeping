@@ -3,8 +3,6 @@ package services
 import (
 	"time"
 
-	"xorm.io/xorm"
-
 	"github.com/mayswind/ezbookkeeping/pkg/core"
 	"github.com/mayswind/ezbookkeeping/pkg/datastore"
 	"github.com/mayswind/ezbookkeeping/pkg/errs"
@@ -124,7 +122,7 @@ func (s *RuleGroupService) CreateRuleGroup(c core.Context, group *models.RuleGro
 	group.CreatedUnixTime = time.Now().Unix()
 	group.UpdatedUnixTime = time.Now().Unix()
 
-	return s.UserDataDB(group.Uid).DoTransaction(c, func(sess *xorm.Session) error {
+	return s.UserDataDB(group.Uid).DoTransaction(c, func(sess datastore.DatabaseSession) error {
 		_, err := sess.Insert(group)
 		return err
 	})
@@ -142,7 +140,7 @@ func (s *RuleGroupService) ModifyRuleGroup(c core.Context, group *models.RuleGro
 
 	group.UpdatedUnixTime = time.Now().Unix()
 
-	return s.UserDataDB(group.Uid).DoTransaction(c, func(sess *xorm.Session) error {
+	return s.UserDataDB(group.Uid).DoTransaction(c, func(sess datastore.DatabaseSession) error {
 		updatedRows, err := sess.ID(group.GroupId).Cols("name", "comment", "active", "stop_processing", "updated_unix_time").
 			Where("uid=? AND deleted=?", group.Uid, false).Update(group)
 
@@ -168,7 +166,7 @@ func (s *RuleGroupService) DeleteRuleGroup(c core.Context, uid int64, groupId in
 
 	now := time.Now().Unix()
 
-	return s.UserDataDB(uid).DoTransaction(c, func(sess *xorm.Session) error {
+	return s.UserDataDB(uid).DoTransaction(c, func(sess datastore.DatabaseSession) error {
 		// Verify ownership
 		exists, err := sess.Cols("uid", "deleted", "group_id").Where("uid=? AND deleted=? AND group_id=?", uid, false, groupId).
 			Limit(1).Exist(&models.RuleGroup{})

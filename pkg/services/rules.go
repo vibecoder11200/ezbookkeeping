@@ -3,8 +3,6 @@ package services
 import (
 	"time"
 
-	"xorm.io/xorm"
-
 	"github.com/mayswind/ezbookkeeping/pkg/core"
 	"github.com/mayswind/ezbookkeeping/pkg/datastore"
 	"github.com/mayswind/ezbookkeeping/pkg/errs"
@@ -203,7 +201,7 @@ func (s *RuleService) CreateRuleWithDetails(c core.Context, uid int64, rule *mod
 		idx++
 	}
 
-	err := s.UserDataDB(uid).DoTransaction(c, func(sess *xorm.Session) error {
+	err := s.UserDataDB(uid).DoTransaction(c, func(sess datastore.DatabaseSession) error {
 		if _, e := sess.Insert(rule); e != nil {
 			return e
 		}
@@ -295,7 +293,7 @@ func (s *RuleService) ModifyRuleWithDetails(c core.Context, uid int64, rule *mod
 		idx++
 	}
 
-	return s.UserDataDB(uid).DoTransaction(c, func(sess *xorm.Session) error {
+	return s.UserDataDB(uid).DoTransaction(c, func(sess datastore.DatabaseSession) error {
 		// Update the rule row
 		updatedRows, e := sess.ID(rule.RuleId).Cols("rule_group_id", "name", "comment", "active", "strict", "stop_processing", "apply_on_create", "apply_on_update", "updated_unix_time").
 			Where("uid=? AND deleted=?", uid, false).Update(rule)
@@ -344,7 +342,7 @@ func (s *RuleService) DeleteRule(c core.Context, uid int64, ruleId int64) error 
 
 	now := time.Now().Unix()
 
-	return s.UserDataDB(uid).DoTransaction(c, func(sess *xorm.Session) error {
+	return s.UserDataDB(uid).DoTransaction(c, func(sess datastore.DatabaseSession) error {
 		updatedRows, err := sess.ID(ruleId).Cols("deleted", "deleted_unix_time").
 			Where("uid=? AND deleted=?", uid, false).Update(&models.Rule{Deleted: true, DeletedUnixTime: now})
 

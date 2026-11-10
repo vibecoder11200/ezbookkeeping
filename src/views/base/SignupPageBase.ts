@@ -7,15 +7,16 @@ import { useSettingsStore } from '@/stores/setting.ts';
 import { useUserStore } from '@/stores/user.ts';
 import { useExchangeRatesStore } from '@/stores/exchangeRates.ts';
 
+import type { TypeAndDisplayName } from '@/core/base.ts';
 import { CategoryType } from '@/core/category.ts';
 import type { RegisterResponse } from '@/models/auth_response.ts';
 import type { User } from '@/models/user.ts';
 
-import { updateMapCacheExpiration } from '@/lib/cache.ts';
+import { updateMapCacheExpiration, updateTransactionPictureCacheExpiration } from '@/lib/cache.ts';
 import { setExpenseAndIncomeAmountColor } from '@/lib/ui/common.ts';
 
 export function useSignupPageBase() {
-    const { tt, getCurrentLanguageTag, getLanguageInfo, setLanguage } = useI18n();
+    const { tt, getCurrentLanguageTag, getLanguageInfo, getAllExpenseAmountColors, getAllIncomeAmountColors, setLanguage } = useI18n();
 
     const rootStore = useRootStore();
     const settingsStore = useSettingsStore();
@@ -24,6 +25,9 @@ export function useSignupPageBase() {
 
     const user = ref<User>(userStore.generateNewUserModel(getCurrentLanguageTag()));
     const submitting = ref<boolean>(false);
+
+    const allExpenseAmountColorTypes = computed<TypeAndDisplayName[]>(() => getAllExpenseAmountColors());
+    const allIncomeAmountColorTypes = computed<TypeAndDisplayName[]>(() => getAllIncomeAmountColors());
 
     const languageTitle = computed<string>(() => {
         const languageInCurrentLanguage = tt('Language');
@@ -40,6 +44,8 @@ export function useSignupPageBase() {
         set: (value: string) => {
             const isCurrencyDefault = user.value.defaultCurrency === settingsStore.localeDefaultSettings.currency;
             const isFirstWeekDayDefault = user.value.firstDayOfWeek === settingsStore.localeDefaultSettings.firstDayOfWeek;
+            const isExpenseAmountColorDefault = user.value.expenseAmountColor === settingsStore.localeDefaultSettings.preferredExpenseAmountColor?.type;
+            const isIncomeAmountColorDefault = user.value.incomeAmountColor === settingsStore.localeDefaultSettings.preferredIncomeAmountColor?.type;
 
             user.value.language = value;
 
@@ -52,6 +58,14 @@ export function useSignupPageBase() {
 
             if (isFirstWeekDayDefault) {
                 user.value.firstDayOfWeek = settingsStore.localeDefaultSettings.firstDayOfWeek;
+            }
+
+            if (isExpenseAmountColorDefault && settingsStore.localeDefaultSettings.preferredExpenseAmountColor) {
+                user.value.expenseAmountColor = settingsStore.localeDefaultSettings.preferredExpenseAmountColor.type;
+            }
+
+            if (isIncomeAmountColorDefault && settingsStore.localeDefaultSettings.preferredIncomeAmountColor) {
+                user.value.incomeAmountColor = settingsStore.localeDefaultSettings.preferredIncomeAmountColor.type;
             }
         },
     });
@@ -117,6 +131,7 @@ export function useSignupPageBase() {
         }
 
         updateMapCacheExpiration(settingsStore.appSettings.mapCacheExpiration);
+        updateTransactionPictureCacheExpiration(settingsStore.appSettings.transactionPictureCacheExpiration);
         exchangeRatesStore.removeExpiredExchangeRates(true);
         exchangeRatesStore.autoUpdateExchangeRatesData();
 
@@ -130,6 +145,8 @@ export function useSignupPageBase() {
         user,
         submitting,
         // computed states
+        allExpenseAmountColorTypes,
+        allIncomeAmountColorTypes,
         languageTitle,
         currentLocale,
         currentLanguageName,

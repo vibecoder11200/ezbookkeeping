@@ -11,9 +11,10 @@ import { useExchangeRatesStore } from '@/stores/exchangeRates.ts';
 
 import { isWebAuthnSupported } from '@/lib/webauthn.ts';
 import { hasWebAuthnConfig } from '@/lib/userstate.ts';
-import { updateMapCacheExpiration } from '@/lib/cache.ts';
+import { updateMapCacheExpiration, updateTransactionPictureCacheExpiration } from '@/lib/cache.ts';
 import { getClientDisplayVersion } from '@/lib/version.ts';
 import { setExpenseAndIncomeAmountColor } from '@/lib/ui/common.ts';
+import logger from '@/lib/logger.ts';
 
 export function useUnlockPageBase() {
     const { setLanguage, initLocale } = useI18n();
@@ -50,12 +51,15 @@ export function useUnlockPageBase() {
             }
 
             updateMapCacheExpiration(settingsStore.appSettings.mapCacheExpiration);
+            updateTransactionPictureCacheExpiration(settingsStore.appSettings.transactionPictureCacheExpiration);
             exchangeRatesStore.removeExpiredExchangeRates(true);
             exchangeRatesStore.autoUpdateExchangeRatesData();
 
             if (response.notificationContent) {
                 rootStore.setNotificationContent(response.notificationContent);
             }
+        }).catch(error => {
+            logger.error('failed to refresh token after unlocking', error);
         });
     }
 

@@ -54,6 +54,7 @@ export const ALL_APPLICATION_CLOUD_SETTINGS: CategorizedApplicationCloudSettingI
             { settingKey: 'showTotalAmountInTransactionListPage', settingName: 'Show Monthly Total Amount', mobile: true, desktop: true },
             { settingKey: 'totalAmountTypeInTransactionListPage', settingName: 'Total Amount Calculation Method', mobile: true, desktop: true },
             { settingKey: 'showTagInTransactionListPage', settingName: 'Show Transaction Tags', mobile: true, desktop: true },
+            { settingKey: 'showPictureIndicatorInTransactionListPage', settingName: 'Show Transaction Picture Indicator', mobile: true, desktop: true },
             { settingKey: 'defaultKeywordMatchModeInTransactionListPage', settingName: 'Default Keyword Search Matching Mode', mobile: true, desktop: true }
         ]
     },
@@ -114,6 +115,7 @@ export const ALL_APPLICATION_CLOUD_SETTINGS: CategorizedApplicationCloudSettingI
         categoryName: 'Browser Cache Management',
         items: [
             { settingKey: 'mapCacheExpiration', settingName: 'Cache Expiration for Map Data', mobile: true, desktop: true },
+            { settingKey: 'transactionPictureCacheExpiration', settingName: 'Cache Expiration for Transaction Pictures', mobile: true, desktop: true },
             { settingKey: 'exchangeRatesDataCacheExpiration', settingName: 'Cache Expiration for Exchange Rates Data', mobile: true, desktop: true }
         ]
     },
